@@ -391,6 +391,48 @@ def verify_slip_checkout(req: VerifySlipCheckoutRequest):
     }
 
 # ==========================================
+# ระบบชำระเงินออนไลน์ผ่าน Stripe (Credit/Debit/PromptPay)
+# ==========================================
+import stripe_service
+
+class StripeCheckoutRequest(BaseModel):
+    plan_id: str
+    cust_name: str
+    cust_email: str
+    cust_phone: Optional[str] = ""
+    cust_org: Optional[str] = ""
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
+
+@app.post("/api/checkout/stripe/create-session")
+def create_stripe_session_endpoint(req: StripeCheckoutRequest):
+    """สร้างเซสชัน Stripe Checkout สำหรับการชำระเงิน"""
+    try:
+        res = stripe_service.create_stripe_checkout(
+            plan_id=req.plan_id,
+            cust_name=req.cust_name,
+            cust_email=req.cust_email,
+            cust_phone=req.cust_phone or "",
+            cust_org=req.cust_org or "",
+            success_url=req.success_url,
+            cancel_url=req.cancel_url
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/checkout/stripe/verify-session")
+def verify_stripe_session_endpoint(session_id: str):
+    """ตรวจสอบสถานะจาก Stripe และออก License Key อัตโนมัติ"""
+    if not session_id:
+        raise HTTPException(status_code=400, detail="ไม่ได้ระบุ session_id")
+    try:
+        res = stripe_service.verify_and_fulfill_checkout(session_id)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ==========================================
 # ระบบจัดการแพ็กเกจราคา (Dynamic Pricing Management)
 # ==========================================
 PACKAGES_PATH = os.path.join(PORTAL_DIR, "packages.json")

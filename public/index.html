@@ -1079,9 +1079,15 @@
           <input type="email" id="cust_email" class="form-control" placeholder="เช่น yourname@gmail.com" required>
         </div>
 
-        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
-          ดำเนินการชำระเงิน (ไปยัง QR พร้อมเพย์) →
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px;">
+          <button type="button" class="btn-primary" id="btnStripePay" onclick="payWithStripe(event)"
+            style="width: 100%; justify-content: center; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);">
+            💳 ชำระผ่านบัตรเครดิต / เดบิต (Stripe Checkout) →
+          </button>
+          <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center;">
+            📱 หรือ ชำระผ่าน QR พร้อมเพย์ (แนบสลิป) →
+          </button>
+        </div>
       </form>
 
       <!-- Step 2: PromptPay Payment Screen (Initially Hidden) -->
@@ -1327,6 +1333,58 @@
 
     function closeCheckout() {
       document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    async function payWithStripe(e) {
+      if (e) e.preventDefault();
+      const form = document.getElementById('orderForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const cust_name = document.getElementById('cust_name').value.trim();
+      const cust_org = document.getElementById('cust_org').value.trim();
+      const cust_phone = document.getElementById('cust_phone').value.trim();
+      const cust_email = document.getElementById('cust_email').value.trim();
+
+      const btn = document.getElementById('btnStripePay');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⏳ กำลังเปิดระบบชำระเงิน Stripe...';
+      btn.disabled = true;
+
+      try {
+        const apiBase = (window.location.port === "8000" || window.location.hostname === "localhost") 
+          ? "" 
+          : "https://siam-braille.web.app";
+
+        const res = await fetch(`${apiBase}/api/checkout/stripe/create-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan_id: currentCheckoutPlan ? currentCheckoutPlan.id : 'personal',
+            cust_name: cust_name,
+            cust_email: cust_email,
+            cust_phone: cust_phone,
+            cust_org: cust_org,
+            success_url: `${window.location.origin}/checkout/success.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${window.location.origin}/#pricing`
+          })
+        });
+
+        const data = await res.json();
+        if (data.status === 'success' && data.checkout_url) {
+          window.location.href = data.checkout_url;
+        } else {
+          alert("ไม่สามารถเริ่มการชำระเงินกับ Stripe ได้: " + (data.detail || data.message || "เกิดข้อผิดพลาด"));
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      } catch (err) {
+        alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ชำระเงินได้: " + err.message);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     }
 
     function handleProceedToPay(e) {

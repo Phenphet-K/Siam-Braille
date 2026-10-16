@@ -1,0 +1,865 @@
+{
+  "pe_header": {
+    "machine": "0x14c",
+    "number_of_sections": 8,
+    "entry_point": "0x8e358",
+    "image_base": "0x400000",
+    "subsystem": 2,
+    "sections": [
+      {
+        "name": "CODE",
+        "virtual_address": "0x1000",
+        "virtual_size": "0x8d490",
+        "raw_size": "0x8d600"
+      },
+      {
+        "name": "DATA",
+        "virtual_address": "0x8f000",
+        "virtual_size": "0x1afc",
+        "raw_size": "0x1c00"
+      },
+      {
+        "name": "BSS",
+        "virtual_address": "0x91000",
+        "virtual_size": "0x5f4d",
+        "raw_size": "0x0"
+      },
+      {
+        "name": ".idata",
+        "virtual_address": "0x97000",
+        "virtual_size": "0x24fe",
+        "raw_size": "0x2600"
+      },
+      {
+        "name": ".tls",
+        "virtual_address": "0x9a000",
+        "virtual_size": "0x10",
+        "raw_size": "0x0"
+      },
+      {
+        "name": ".rdata",
+        "virtual_address": "0x9b000",
+        "virtual_size": "0x18",
+        "raw_size": "0x200"
+      },
+      {
+        "name": ".reloc",
+        "virtual_address": "0x9c000",
+        "virtual_size": "0x9a40",
+        "raw_size": "0x9c00"
+      },
+      {
+        "name": ".rsrc",
+        "virtual_address": "0xa6000",
+        "virtual_size": "0x2a000",
+        "raw_size": "0x2a000"
+      }
+    ]
+  },
+  "imports": {
+    "kernel32.dll": [
+      "lstrcpyA",
+      "WriteFile",
+      "WaitForSingleObject",
+      "VirtualQuery",
+      "VirtualAlloc",
+      "Sleep",
+      "SizeofResource",
+      "SetThreadLocale",
+      "SetFilePointer",
+      "SetEvent",
+      "SetErrorMode",
+      "SetEndOfFile",
+      "ReadFile",
+      "MulDiv",
+      "LockResource",
+      "LoadResource",
+      "LoadLibraryA",
+      "LeaveCriticalSection",
+      "InitializeCriticalSection",
+      "GlobalUnlock",
+      "GlobalSize",
+      "GlobalReAlloc",
+      "GlobalHandle",
+      "GlobalLock",
+      "GlobalFree",
+      "GlobalDeleteAtom",
+      "GlobalAlloc",
+      "GlobalAddAtomA",
+      "GetVolumeInformationA",
+      "GetVersionExA",
+      "GetVersion",
+      "GetTickCount",
+      "GetThreadLocale",
+      "GetSystemInfo",
+      "GetProfileStringA",
+      "GetProcAddress",
+      "GetModuleHandleA",
+      "GetModuleFileNameA",
+      "GetLogicalDrives",
+      "GetLocaleInfoA",
+      "GetLastError",
+      "GetFileAttributesA",
+      "GetDriveTypeA",
+      "GetDiskFreeSpaceA",
+      "GetCurrentThreadId",
+      "GetCurrentProcessId",
+      "GetCPInfo",
+      "FreeResource",
+      "FreeLibrary",
+      "FormatMessageA",
+      "FindResourceA",
+      "FindNextFileA",
+      "FindFirstFileA",
+      "FindClose",
+      "FileTimeToLocalFileTime",
+      "FileTimeToDosDateTime",
+      "EnumCalendarInfoA",
+      "EnterCriticalSection",
+      "DeleteCriticalSection",
+      "CreateThread",
+      "CreateFileA",
+      "CreateEventA",
+      "CompareStringA",
+      "CloseHandle"
+    ],
+    "user32.dll": [
+      "WindowFromPoint",
+      "WinHelpA",
+      "WaitMessage",
+      "UpdateWindow",
+      "UnregisterClassA",
+      "UnhookWindowsHookEx",
+      "TranslateMessage",
+      "TranslateMDISysAccel",
+      "TrackPopupMenu",
+      "SystemParametersInfoA",
+      "ShowWindow",
+      "ShowScrollBar",
+      "ShowOwnedPopups",
+      "ShowCursor",
+      "SetWindowsHookExA",
+      "SetWindowTextA",
+      "SetWindowPos",
+      "SetWindowPlacement",
+      "SetWindowLongA",
+      "SetTimer",
+      "SetScrollRange",
+      "SetScrollPos",
+      "SetScrollInfo",
+      "SetRect",
+      "SetPropA",
+      "SetMenuItemInfoA",
+      "SetMenu",
+      "SetForegroundWindow",
+      "SetFocus",
+      "SetCursor",
+      "SetClipboardData",
+      "SetClassLongA",
+      "SetCapture",
+      "SetActiveWindow",
+      "SendMessageA",
+      "SendDlgItemMessageA",
+      "ScrollWindow",
+      "ScreenToClient",
+      "RemovePropA",
+      "RemoveMenu",
+      "ReleaseDC",
+      "ReleaseCapture",
+      "RegisterWindowMessageA",
+      "RegisterClipboardFormatA",
+      "RegisterClassA",
+      "RedrawWindow",
+      "PtInRect",
+      "PostQuitMessage",
+      "PostMessageA",
+      "PeekMessageA",
+      "OpenClipboard",
+      "OffsetRect",
+      "OemToCharA",
+      "MessageBoxA",
+      "MessageBeep",
+      "MapWindowPoints",
+      "MapVirtualKeyA",
+      "LoadStringA",
+      "LoadKeyboardLayoutA",
+      "LoadIconA",
+      "LoadCursorA",
+      "LoadBitmapA",
+      "KillTimer",
+      "IsZoomed",
+      "IsWindowVisible",
+      "IsWindowEnabled",
+      "IsWindow",
+      "IsRectEmpty",
+      "IsIconic",
+      "IsDialogMessageA",
+      "IsClipboardFormatAvailable",
+      "IsChild",
+      "InvalidateRect",
+      "IntersectRect",
+      "InsertMenuItemA",
+      "InsertMenuA",
+      "InflateRect",
+      "GetWindowThreadProcessId",
+      "GetWindowTextA",
+      "GetWindowRect",
+      "GetWindowPlacement",
+      "GetWindowLongA",
+      "GetWindowDC",
+      "GetUpdateRect",
+      "GetTopWindow",
+      "GetSystemMetrics",
+      "GetSystemMenu",
+      "GetSysColor",
+      "GetSubMenu",
+      "GetScrollRange",
+      "GetScrollPos",
+      "GetScrollInfo",
+      "GetPropA",
+      "GetParent",
+      "GetWindow",
+      "GetMenuStringA",
+      "GetMenuState",
+      "GetMenuItemInfoA",
+      "GetMenuItemID",
+      "GetMenuItemCount",
+      "GetMenu",
+      "GetLastActivePopup",
+      "GetKeyboardState",
+      "GetKeyboardLayoutList",
+      "GetKeyboardLayout",
+      "GetKeyState",
+      "GetKeyNameTextA",
+      "GetIconInfo",
+      "GetForegroundWindow",
+      "GetFocus",
+      "GetDlgItem",
+      "GetDesktopWindow",
+      "GetDCEx",
+      "GetDC",
+      "GetCursorPos",
+      "GetCursor",
+      "GetClipboardData",
+      "GetClientRect",
+      "GetClassInfoA",
+      "GetCapture",
+      "GetActiveWindow",
+      "FrameRect",
+      "FindWindowA",
+      "FillRect",
+      "EqualRect",
+      "EnumWindows",
+      "EnumThreadWindows",
+      "EnumClipboardFormats",
+      "EndPaint",
+      "EndDeferWindowPos",
+      "EnableWindow",
+      "EnableScrollBar",
+      "EnableMenuItem",
+      "EmptyClipboard",
+      "DrawTextA",
+      "DrawMenuBar",
+      "DrawIconEx",
+      "DrawIcon",
+      "DrawFrameControl",
+      "DrawFocusRect",
+      "DrawEdge",
+      "DispatchMessageA",
+      "DestroyWindow",
+      "DestroyMenu",
+      "DestroyIcon",
+      "DestroyCursor",
+      "DeleteMenu",
+      "DeferWindowPos",
+      "DefWindowProcA",
+      "DefMDIChildProcA",
+      "DefFrameProcA",
+      "CreateWindowExA",
+      "CreatePopupMenu",
+      "CreateMenu",
+      "CreateIcon",
+      "CloseClipboard",
+      "ClientToScreen",
+      "CheckMenuItem",
+      "CallWindowProcA",
+      "CallNextHookEx",
+      "BringWindowToTop",
+      "BeginPaint",
+      "BeginDeferWindowPos",
+      "CharLowerBuffA",
+      "CharLowerA",
+      "CharUpperBuffA",
+      "AdjustWindowRectEx",
+      "ActivateKeyboardLayout"
+    ],
+    "advapi32.dll": [
+      "RegQueryValueExA",
+      "RegOpenKeyExA",
+      "RegCloseKey"
+    ],
+    "oleaut32.dll": [
+      "VariantChangeTypeEx",
+      "VariantCopyInd",
+      "VariantClear",
+      "SysStringLen",
+      "SysFreeString",
+      "SysReAllocStringLen",
+      "SysAllocStringLen"
+    ],
+    "mpr.dll": [
+      "WNetGetConnectionA"
+    ],
+    "version.dll": [
+      "VerQueryValueA",
+      "GetFileVersionInfoSizeA",
+      "GetFileVersionInfoA"
+    ],
+    "gdi32.dll": [
+      "UnrealizeObject",
+      "StretchBlt",
+      "StartPage",
+      "StartDocA",
+      "SetWindowOrgEx",
+      "SetWinMetaFileBits",
+      "SetViewportOrgEx",
+      "SetTextColor",
+      "SetStretchBltMode",
+      "SetROP2",
+      "SetPixel",
+      "SetMapMode",
+      "SetEnhMetaFileBits",
+      "SetDIBColorTable",
+      "SetBrushOrgEx",
+      "SetBkMode",
+      "SetBkColor",
+      "SetAbortProc",
+      "SelectPalette",
+      "SelectObject",
+      "SaveDC",
+      "RestoreDC",
+      "Rectangle",
+      "RectVisible",
+      "RealizePalette",
+      "Polyline",
+      "PlayEnhMetaFile",
+      "PatBlt",
+      "MoveToEx",
+      "MaskBlt",
+      "LineTo",
+      "IntersectClipRect",
+      "GetWindowOrgEx",
+      "GetWinMetaFileBits",
+      "GetTextMetricsA",
+      "GetTextExtentPointA",
+      "GetTextExtentPoint32A",
+      "GetSystemPaletteEntries",
+      "GetStockObject",
+      "GetRgnBox",
+      "GetPixel",
+      "GetPaletteEntries",
+      "GetObjectA",
+      "GetEnhMetaFilePaletteEntries",
+      "GetEnhMetaFileHeader",
+      "GetEnhMetaFileBits",
+      "GetDeviceCaps",
+      "GetDIBits",
+      "GetDIBColorTable",
+      "GetDCOrgEx",
+      "GetCurrentPositionEx",
+      "GetClipBox",
+      "GetBrushOrgEx",
+      "GetBitmapBits",
+      "GdiFlush",
+      "ExtTextOutA",
+      "ExcludeClipRect",
+      "EndPage",
+      "EndDoc",
+      "DeleteObject",
+      "DeleteEnhMetaFile",
+      "DeleteDC",
+      "CreateSolidBrush",
+      "CreateRectRgn",
+      "CreatePenIndirect",
+      "CreatePalette",
+      "CreateICA",
+      "CreateHalftonePalette",
+      "CreateFontIndirectA",
+      "CreateDIBitmap",
+      "CreateDIBSection",
+      "CreateDCA",
+      "CreateCompatibleDC",
+      "CreateCompatibleBitmap",
+      "CreateBrushIndirect",
+      "CreateBitmap",
+      "CopyEnhMetaFileA",
+      "CombineRgn",
+      "BitBlt"
+    ],
+    "ole32.dll": [
+      "IsEqualGUID"
+    ],
+    "comctl32.dll": [
+      "ImageList_SetIconSize",
+      "ImageList_GetIconSize",
+      "ImageList_Write",
+      "ImageList_Read",
+      "ImageList_GetDragImage",
+      "ImageList_DragShowNolock",
+      "ImageList_SetDragCursorImage",
+      "ImageList_DragMove",
+      "ImageList_DragLeave",
+      "ImageList_DragEnter",
+      "ImageList_EndDrag",
+      "ImageList_BeginDrag",
+      "ImageList_Remove",
+      "ImageList_DrawEx",
+      "ImageList_Replace",
+      "ImageList_Draw",
+      "ImageList_GetBkColor",
+      "ImageList_SetBkColor",
+      "ImageList_ReplaceIcon",
+      "ImageList_Add",
+      "ImageList_GetImageCount",
+      "ImageList_Destroy",
+      "ImageList_Create",
+      "InitCommonControls"
+    ],
+    "winspool.drv": [
+      "OpenPrinterA",
+      "EnumPrintersA",
+      "DocumentPropertiesA",
+      "ClosePrinter"
+    ],
+    "comdlg32.dll": [
+      "PrintDlgA",
+      "ChooseFontA",
+      "ReplaceTextA",
+      "FindTextA",
+      "GetSaveFileNameA",
+      "GetOpenFileNameA"
+    ],
+    "nbreak.dll": [
+      "Ordinal_2"
+    ]
+  },
+  "forms_count": 17,
+  "forms": [
+    "DVCLAL",
+    "PACKAGEINFO",
+    "TABOUTBOX",
+    "TAPPLICATION",
+    "TFORM1",
+    "TFORM10",
+    "TFORM11",
+    "TFORM12",
+    "TFORM2",
+    "TFORM3",
+    "TFORM4",
+    "TFORM5",
+    "TFORM6",
+    "TFORM7",
+    "TFORM8",
+    "TFORM9",
+    "TSDIAPPFORM"
+  ],
+  "classes_count": 265,
+  "classes": [
+    "TAboutBox",
+    "TActionEvent",
+    "TActionLinkSV",
+    "TActionList",
+    "TAlignment",
+    "TAnchorKind",
+    "TAnchors",
+    "TApplication",
+    "TApplication0DD",
+    "TBT_For_Win",
+    "TBasicAction",
+    "TBasicActionX",
+    "TBevelCut",
+    "TBevelWidth",
+    "TBiDiMode",
+    "TBitBtnKind",
+    "TBitmapCanvas",
+    "TBitmapImage",
+    "TBorderIcon",
+    "TBorderIcons",
+    "TBorderStyle",
+    "TBorderWidth",
+    "TBrushStyle",
+    "TButtonControl",
+    "TButtonGlyph",
+    "TButtonLayout",
+    "TButtonStyle",
+    "TCanResizeEvent",
+    "TCaption",
+    "TChangeLinkT"
+  ],
+  "methods_count": 74,
+  "methods": [
+    "AllowChange",
+    "BitBtn1Click",
+    "Braille1Click",
+    "BraillePage1Click",
+    "BrailleTextFile1Click",
+    "Button1Click",
+    "Button2Click",
+    "ButtonLeft1Click",
+    "ButtonRight1Click",
+    "ChangWindows1Click",
+    "CheckBox1Click",
+    "CheckBox2Click",
+    "CheckBox3Click",
+    "CheckBox4Click",
+    "Checkyourmachine1Click",
+    "CloseAll1Click",
+    "Com11Click",
+    "Com21Click",
+    "ContractInformation1Click",
+    "Default1Click",
+    "DriveComboBox1Change",
+    "DubbleSize1Click",
+    "Englishkeyboard1Click",
+    "FileExit1Execute",
+    "FileListBox1Change",
+    "FileNew1Execute",
+    "FileOpen1Execute",
+    "Fine1Click",
+    "Font1Click",
+    "FullScreen1Click",
+    "GotoIndexKey1Click",
+    "GotoIndexKey2Click",
+    "Grade1withnocontraction1Click",
+    "Grade2withcontraction1Click",
+    "Grade2withcontraction2Click",
+    "Help2Click",
+    "HelpAbout1Execute",
+    "LPT11Click",
+    "LPT21Click",
+    "No1Click"
+  ],
+  "thai_strings_count": 9043,
+  "sample_thai_strings": [
+    "๘้ฃF",
+    "๘้ญF",
+    "ฬฬฬA",
+    "ภSVพP",
+    "๚du์",
+    "รSVWUQ",
+    "รSVWU",
+    "๛WS่",
+    "ภSVWUQ",
+    "๛WS่ญ๛",
+    "ร่์๛",
+    "ล่ใ๛",
+    "ภSVWU",
+    "์3าUh",
+    "ภZYYd",
+    "ภu้3ภZYYd",
+    "ล่ำ๛",
+    "รSVW",
+    "ภSVW",
+    "ร่ป๘",
+    "ยรSVWU",
+    "ฤ๘SVW",
+    "ษUhธ",
+    "์QSVW",
+    "ุ3ภฃ0",
+    "๐่t๘",
+    "ฺ่่๗",
+    "ฦ่/๚",
+    "๋,่J๖",
+    "ร่โ๙",
+    "าUh๑",
+    "ฦ่ฃ๚",
+    "ภu๋รฐ",
+    "ภPRQ่ฌ",
+    "ร1ภ้",
+    "๋ๅ1ษ๋์",
+    "ฺ3าUh",
+    "รSVWQ",
+    "็I)ส๓ค",
+    "ั๓ค)็",
+    "ศ9๗w",
+    "๋ๆ3ภ๋",
+    "่P่ๅๆ",
+    "ทE๐kภ",
+    "ะiภ่",
+    "ู-(๐H",
+    "ส๋่ร1ษVW",
+    "ื1ภ1า",
+    "ยRม๊",
+    "ูuDJt"
+  ],
+  "embosser_commands": [
+    {
+      "keyword": "Index",
+      "snippet": "nControl\u0000\u0005Index\u0007Integer\u0010\u0004Rect\u0005TRect\u0000\u0005State\u000fTO"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "nControl\u0000\u0005Index\u0007Integer\u0001\u0006Height\u0007Integer@\u0000\u001c B"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "��\b\u0000\nImageIndexุษ@\u0000h\u0000\u0000�tคC\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\t\u0000\bSho"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "C\u0000\u0001\u000bTImageIndex\u0004\u0000\u0000\u0000���ภ0งC\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000งC"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0000\u0000\f\u0000\nGroupIndexผษ@\u0000H\u0000\u0000�H\u0000\u0000���C\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\r\u0000\u000bHel"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "��\u000f\u0000\nImageIndex\u0000\u0010@\u00001\u0000\u0000� ๛C\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000\tRad"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "���\u0015\u0000\tItemIndexำ@\u0000�\u0001\u0000�ภ\u0010E\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0016\u0000\u0005Ite"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0000\t\u0000\u000bFilterIndex\u0010@\u0000d\u0000\u0000�8/E\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\n\u0000\nIni"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0000\u0000\r\u0000\nGroupIndex\u0000\u0010@\u00000\u0001\u0000�\fnE\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u000e\u0000\u0004Dow"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "��\u0013\u0000\nImageIndex\u0000\u0010@\u00000\u0001\u0000�ภํE\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0014\u0000\rInd"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0002\u0000\u0000\u0005\u0000\rGotoIndexKey1๔\u0002\u0000\u0000\u0005\u0000\rGotoIndexKey2๘\u0002\u0000\u0000\u0001\u0000"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0002\u0000\u0000\u0005\u0000\rGotoIndexKey2๘\u0002\u0000\u0000\u0001\u0000\u0006Label3�\u0002\u0000\u0000\u0006\u0000\bIndexK"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "el3�\u0002\u0000\u0000\u0006\u0000\bIndexKey\u0000\u0003\u0000\u0000\u0007\u0000\u0007Button1\u0004\u0003\u0000\u0000\b\u0000\nInfoma"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0000 \u0013H\u0000\u0012GotoIndexKey1Click\u0016\u0000จ\u0013H\u0000\u000fFindDialog1Fin"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0000ฐ\u0014H\u0000\u0012GotoIndexKey2Click\u0013\u0000ภ\u0014H\u0000\fFormActivate\u0013\u0000"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "\u0007Caption\u0006\u000bIndex key :\fFont.Charset\u0007\fTHAI_CHAR"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "TComboBox\bIndexKey\u0004Left\u0002x\u0003Top\u0002.\u0005Width\u0003)\u0002\u0006Heig"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "lick\u0007\u0012GotoIndexKey1Click\nOnKeyPress\u0007\fFormKeyP"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "uItem\rGotoIndexKey1\u0007Caption\u0006\fSearch Index\bSho"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "n\u0006\fSearch Index\bShortCut\u0003F@\u0007OnClick\u0007\u0012GotoInde"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "lick\u0007\u0012GotoIndexKey1Click\u0000\u0000\tTMenuItem\rGotoInde"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "uItem\rGotoIndexKey2\u0007Caption\u0006\u000eGoto Index Key\bS"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "ion\u0006\u000eGoto Index Key\bShortCut\u0003K@\u0007OnClick\u0007\u0012Goto"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "lick\u0007\u0012GotoIndexKey2Click\u0000\u0000\u0000\u0000\u0000TPF0\u0007TForm11\u0006For"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "ton3\nImageIndex\u0002\u0002\u0005Style\u0007\ftbsSeparator\u0000\u0000\u000bTTool"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "file\nImageIndex\u0002\u0006\bShortCut\u0003N@\tOnExecute\u0007\u000fFile"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "file\nImageIndex\u0002\u0007\bShortCut\u0003O@\tOnExecute\u0007\u0010File"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "file\nImageIndex\u0002\b\bShortCut\u0003S@\u0000\u0000\u0007TAction\u000bFileS"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "oard\nImageIndex\u0002\u0000\bShortCut\u0003X@\u0000\u0000\tTEditCopy\tEdi"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "oard\nImageIndex\u0002\u0001\bShortCut\u0003C@\u0000\u0000\nTEditPaste\nEd"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "ents\nImageIndex\u0002\u0002\bShortCut\u0003V@\u0000\u0000\u0007TAction\nHelpA"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "New1\nGroupIndex\u0002\u0001\u0004Hint\u0006\fเปิดไฟล์ใหม่\u0000\u0000\tTMenuI"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "pen1\nGroupIndex\u0002\u0001\u0004Hint\u0006\fเปิดไฟล์เก่า\u0000\u0000\tTMenuI"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "ate \nGroupIndex\u0002\u0001\u0004Hint\u0006\rแปลเป็นเบรลล์\bShortCu"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "rint\nGroupIndex\u0002\u0001\u0004Hint\u0006\u0015ส่งไปเครื่องพิมพ์ปกติ"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "ille\nGroupIndex\u0002\u0001\u0004Hint\u0006\u0017ส่งไปเครื่องพิมพ์เบรล"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "n\u0006\u0001-\nGroupIndex\u0002\u0001\u0000\u0000\tTMenuItem\u000bPrintSetup1\u0007Cap"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "etup\nGroupIndex\u0002\u0001\u0004Hint\u0006\u0013ตั้งค่าเครื่องพิมพ์\bS"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "Save\nGroupIndex\u0002\u0001\u0004Hint\u0006\u0006บันทึก\bShortCut\u0003S@\u0007On"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "e As\nGroupIndex\u0002\u0001\u0004Hint\u0006\nบันทึกเป็น\u0007OnClick\u0007\fS"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "led\b\nGroupIndex\u0002\u0001\u0004Hint\u0006\u0011บันทึกไฟล์ทั้งหมด\bSho"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "All\nGroupIndex\u0002\u0001\u0004Hint\u0006\u000eปิดไฟล์ทั้งหมด\bShortC"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "n\u0006\u0001-\nGroupIndex\u0002\u0001\u0000\u0000\tTMenuItem\fFileExitItem\u0006Ac"
+    },
+    {
+      "keyword": "Index",
+      "snippet": "xit1\nGroupIndex\u0002\u0001\u0004Hint\u0006\u000eออกจากการทำงาน\bShortC"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": "m21\u0003\u0000\u0000\u000b\u0000\u0005LPT11\u0003\u0000\u0000\u000b\u0000\u0005LPT21\u0003\u0000\u0000\u000b\u0000\rPrintingMo"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": "ick\u0011\u0000$H\u0000\nLPT11Click\u0011\u0000TH\u0000\nLPT21Click\u0017\u0000H\u0000\u0010"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": "\u0000\u0000Printer LPT1\u0000\u0000\u0000\u0000����\f\u0000\u0000\u0000Printer LPT2\u0000\u0000\u0000\u0000��"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": "\u0000\u0000Printer LPT1\u0000\u0000\u0000\u0000����\f\u0000\u0000\u0000Printer LPT2\u0000\u0000\u0000\u0000��"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": ", Printer LPT1, Printer LPT2  \u00067\t\t  แต่ Seri"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": "TMenuItem\u0005LPT11\u0007Caption\u0006\u0016Printer LPT 1 selec"
+    },
+    {
+      "keyword": "LPT1",
+      "snippet": "\u0007OnClick\u0007\nLPT11Click\u0000\u0000\tTMenuItem\u0005LPT21\u0007Capti"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000\u0000����\u0004\u0000\u0000\u0000.tbt\u0000\u0000\u0000\u0000����\u0004\u0000\u0000\u0000.TBT\u0000\u0000\u0000\u0000����\u0005\u0000\u0000\u0000Fi"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "not have .tbt extension\u0000\u0000\u0000U์ฤ`���SV3ษM๘"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000c:\\noname.tbt\u0000\u0000\u0000����\u0011\u0000\u0000\u0000TBT for windows (\u0000\u0000"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000c:\\noname.tbt\u0000\u0000\u0000����\u0011\u0000\u0000\u0000TBT for windows (\u0000\u0000"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000\u0000Files (*.tbt)|*.tbt\u0000����\u0003\u0000\u0000\u0000tbt\u0000กิ\nI\u0000\u0000\u0010�"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "(*.tbt)|*.tbt\u0000����\u0003\u0000\u0000\u0000tbt\u0000กิ\nI\u0000\u0000\u0010�ุ\u0000\u0000\u0000ร"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000c:\\noname.tbt\u0000\u0000\u0000����\u0011\u0000\u0000\u0000TBT for windows (\u0000\u0000"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000c:\\noname.tbt\u0000\u0000\u0000����\u0003\u0000\u0000\u0000tbt\u0000SVฤ๘ุณ\f\u0004\u0000\u0000F"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000c:\\noname.tbt\u0000\u0000\u0000����\u0003\u0000\u0000\u0000tbt\u0000U์น\u0005\u0000\u0000\u0000j\u0000j\u0000Iu๙"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0000\u0000Files (*.tbt)|*.tbt\u0000����\u0003\u0000\u0000\u0000tbt\u0000SV๑ุ\f\u0004"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "(*.tbt)|*.tbt\u0000����\u0003\u0000\u0000\u0000tbt\u0000SV๑ุ\f\u0004\u0000\u0000่Cs๙�"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "\u0002\u000e\u0004Mask\u0006\u0005*.tbt\bTabOrder\u0002\u0006\bOnChange\u0007\u0012FileList"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "BT Text (*.tbt)|*.tbt\nInitialDir\u0006\u000bc:\\mydocu~"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "(*.tbt)|*.tbt\nInitialDir\u0006\u000bc:\\mydocu~1\u0005Title"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "t|Files (*.tbt)|*.tbt\nInitialDir\u0006\u000bc:\\Mydocu~"
+    },
+    {
+      "keyword": ".tbt",
+      "snippet": "(*.tbt)|*.tbt\nInitialDir\u0006\u000bc:\\Mydocu~1\u0007Optio"
+    }
+  ]
+}
