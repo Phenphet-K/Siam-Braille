@@ -25,7 +25,7 @@ FILES_TO_COPY = [
     "run_SiamBraille.bat"
 ]
 
-DIRS_TO_COPY = ["data", "Tables", "logo"]
+DIRS_TO_COPY = ["data", "Tables", "logo", "assets"]
 
 def distribute():
     for target_dir in DIST_DIRS:
