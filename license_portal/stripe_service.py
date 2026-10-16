@@ -69,7 +69,6 @@ def create_stripe_checkout(
         cancel_url = "https://siam-braille.web.app/#pricing"
 
     session = stripe.checkout.Session.create(
-        payment_method_types=["card"],
         line_items=[{
             "price_data": {
                 "currency": "thb",
