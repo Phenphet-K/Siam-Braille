@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SiamBraille 1.0 — โปรแกรมแปลอักษรเบรลล์ไทย มาตรฐาน พ.ศ. 2564</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --bg-card: rgba(18, 26, 44, 0.7);
+      --border-card: rgba(56, 189, 248, 0.2);
+      --accent-cyan: #06b6d4;
+      --accent-blue: #3b82f6;
+      --accent-indigo: #6366f1;
+      --accent-emerald: #10b981;
+      --accent-gold: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    .slip-upload-area {
+      border: 2px dashed rgba(56, 189, 248, 0.4);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.6);
+      transition: all 0.2s;
+      margin: 16px 0;
+    }
+
+    .slip-upload-area:hover,
+    .slip-upload-area.dragover {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Sarabun', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.18) 0px, transparent 45%),
+        radial-gradient(at 100% 30%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      background: rgba(7, 11, 20, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 100;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+
+    .brand-name {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      background: linear-gradient(to right, #ffffff, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent-cyan);
+    }
+
+    .btn-nav-admin {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-nav-admin:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--accent-cyan);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 90px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 30px;
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: #38bdf8;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      animation: pulseGlow 3s infinite;
+    }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+      }
+
+      50% {
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.45);
+      }
+    }
+
+    .hero-title {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #ffffff 40%, #93c5fd 80%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Live Interactive Demo Widget */
+    .demo-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .demo-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .demo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 32px;
+      }
+    }
+
+    .input-box {
+      width: 100%;
+      height: 140px;
+      background: rgba(10, 15, 26, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 14px;
+      color: #fff;
+      font-size: 15px;
+      resize: none;
+      outline: none;
+    }
+
+    .input-box:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .braille-output-box {
+      width: 100%;
+      height: 140px;
+      background: rgba(10, 15, 26, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 20px;
+      line-height: 1.4;
+      overflow-y: auto;
+      letter-spacing: 2px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Features Grid */
+    .features-section {
+      padding: 90px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-family: 'Chakra Petch', sans-serif;
+    }
+
+    .section-sub {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 28px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(12px);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: rgba(6, 182, 212, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Pricing Section */
+    .pricing-section {
+      padding: 90px 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.4) 100%);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      backdrop-filter: blur(14px);
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card.popular {
+      border-color: #38bdf8;
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.25);
+      background: rgba(22, 34, 58, 0.85);
+      transform: scale(1.03);
+    }
+
+    .popular-tag {
+      position: absolute;
+      top: -14px;
+      right: 28px;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+
+    .plan-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-family: 'Chakra Petch', sans-serif;
+    }
+
+    .plan-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      min-height: 40px;
+    }
+
+    .plan-price {
+      font-size: 42px;
+      font-weight: 800;
+      font-family: 'Chakra Petch', sans-serif;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .plan-price span {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .plan-features {
+      list-style: none;
+      margin: 28px 0;
+      flex-grow: 1;
+    }
+
+    .plan-features li {
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #e2e8f0;
+    }
+
+    .plan-features li::before {
+      content: '✓';
+      color: var(--accent-emerald);
+      font-weight: bold;
+    }
+
+    /* Checkout & Payment Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .checkout-modal {
+      background: #111827;
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      width: 560px;
+      max-width: 100%;
+      padding: 32px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 26px;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* PromptPay Box */
+    .promptpay-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .qr-container {
+      width: 220px;
+      height: 220px;
+      margin: 16px auto;
+      background: #fff;
+      padding: 12px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .qr-container img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .amount-display {
+      font-size: 28px;
+      font-weight: 800;
+      color: #38bdf8;
+      font-family: 'Chakra Petch', sans-serif;
+    }
+
+    /* Success Screen */
+    .success-box {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .key-reveal-box {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px dashed var(--accent-cyan);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 1px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <a href="/" class="brand-logo">
+        <div class="logo-badge">SB</div>
+        <span class="brand-name">SiamBraille 1.0</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">ฟีเจอร์หลัก</a></li>
+        <li><a href="#demo">ทดลองแปลสด</a></li>
+        <li><a href="#pricing">แพ็กเกจราคา</a></li>
+        <li><a href="#pricing" class="btn-primary" style="padding: 8px 18px; font-size: 13px;">ดาวน์โหลด / สั่งซื้อ</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span>✨ มาตรฐานการใช้อักษรเบรลล์ในประเทศไทย ฉบับปรับปรุง พ.ศ. 2564</span>
+      </div>
+      <h1 class="hero-title">โปรแกรมแปลอักษรเบรลล์ไทย<br>มาตรฐานสากลแห่งอนาคต</h1>
+      <p class="hero-subtitle">
+        แม่นยำ รวดเร็ว แปลตรงตามหลักวิชาการ 100% ควบคุม 30 เซลล์ต่อบรรทัด และ 25 บรรทัดต่อหน้าอย่างสมบูรณ์แบบ
+        รองรับโปรแกรมอ่านจอภาพ NVDA และสั่งพิมพ์ออกเครื่องพิมพ์เบรลล์ได้ทันที
+      </p>
+      <div class="hero-cta">
+        <a href="/api/download/setup" class="btn-primary" id="btnDownloadHero">
+          <span>🚀 ดาวน์โหลดทดลองใช้ฟรี (14 วัน)</span>
+        </a>
+        <a href="#pricing" class="btn-secondary">
+          <span>💳 ดูแพ็กเกจและสั่งซื้อลิขสิทธิ์</span>
+        </a>
+      </div>
+
+      <!-- Live Interactive Demo Widget -->
+      <div class="demo-card" id="demo">
+        <div class="demo-header">
+          <div class="demo-title">
+            <span>⚡ ทดสอบการแปลอักษรเบรลล์สด (Live Interactive Simulator)</span>
+          </div>
+          <span style="font-size: 12px; color: var(--text-muted);">มาตรฐานปี 2564 สมบูรณ์</span>
+        </div>
+        <div class="demo-grid">
+          <div>
+            <label
+              style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">พิมพ์ข้อความภาษาไทยที่นี่:</label>
+            <textarea class="input-box" id="demoInput" oninput="translateDemo()"
+              placeholder="พิมพ์ภาษาไทย เช่น สวัสดีครับ ยินดีต้อนรับสู่ SiamBraille 1.0">สวัสดีครับ ยินดีต้อนรับสู่โปรแกรมสยามเบรลล์</textarea>
+          </div>
+          <div>
+            <label
+              style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">ผลการแปลงเป็นอักษรเบรลล์
+              6 จุด (Braille Unicode Cells):</label>
+            <div class="braille-output-box" id="demoOutput">⠎⠺⠢⠎⠙⠦⠅⠗⠢⠃ ⠽⠊⠝⠙⠦⠞⠦⠕⠝⠗⠢⠃⠎⠥⠂⠹⠏⠗⠣⠅⠗⠍⠎⠽⠤⠍⠱⠃⠗⠇⠇⠠</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Features Grid -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">นวัตกรรมเพื่อผู้พิการทางสายตาอย่างแท้จริง</h2>
+        <p class="section-sub">พัฒนาขึ้นใหม่ด้วยเทคโนโลยีระดับสูง เพื่อตอบสนองการผลิตสื่อเบรลล์ที่มีคุณภาพสูงสุด</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>มาตรฐาน พ.ศ. 2564</h3>
+          <p>ปฏิบัติตามคู่มือการใช้อักษรเบรลล์ไทย ฉบับปี 2564 ครบถ้วน ทั้งคำควบกล้ำ อักษรนำ คำย่อ สระพิเศษ
+            และเครื่องหมายวรรคตอน</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📐</div>
+          <h3>30 เซลล์ x 25 บรรทัด</h3>
+          <p>ล็อกระยะหน้ากระดาษพิมพ์เบรลล์เป๊ะ ไม่มีการล้นขอบกระดาษ พร้อมระบบจัดเลขหน้าและจัดคำต่อบรรทัดอย่างเป็นระเบียบ
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔊</div>
+          <h3>NVDA Screen Reader</h3>
+          <p>มี Bridge สำหรับเชื่อมต่อเสียงอ่านจอภาพ NVDA บิลท์อินในตัวโปรแกรม
+            ผู้มีสายตาเลือนรางสามารถใช้งานแป้นพิมพ์ลัดได้สะดวก 100%</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🖨️</div>
+          <h3>รองรับ Embosser ทุกยี่ห้อ</h3>
+          <p>สั่งพิมพ์ผ่านไดรเวอร์ Windows หรือสั่งพิมพ์ตรงผ่านคำสั่งเครื่องพิมพ์เบรลล์ (Direct Braille ESC/P)
+            ได้อย่างไร้รอยต่อ</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">แพ็กเกจและค่าบริการที่คุ้มค่า</h2>
+        <p class="section-sub">เลือกลิขสิทธิ์ที่เหมาะสมกับความต้องการของคุณ ชำระเงินง่ายผ่านไทยพร้อมเพย์</p>
+      </div>
+
+      <div class="pricing-grid" id="pricingGrid">
+        <!-- Plan 1 -->
+        <div class="pricing-card">
+          <div class="plan-name">ทดลองใช้งานฟรี</div>
+          <div class="plan-desc">สำหรับทดสอบความแม่นยำและฟังก์ชันการพิมพ์</div>
+          <div class="plan-price">0 ฿ <span>/ 14 วัน</span></div>
+          <ul class="plan-features">
+            <li>ใช้งานได้ 1 เครื่องคอมพิวเตอร์</li>
+            <li>แปลอักษรเบรลล์ได้ทุกหมวดหมู่</li>
+            <li>สั่งพิมพ์ออกกระดาษเบรลล์ได้จริง</li>
+            <li>รองรับเสียงอ่านจอภาพ NVDA</li>
+          </ul>
+          <a href="/api/download/setup" class="btn-secondary" style="justify-content: center;">ดาวน์โหลดใช้งานฟรี</a>
+        </div>
+
+        <!-- Plan 2 -->
+        <div class="pricing-card popular">
+          <div class="popular-tag">ยอดนิยม</div>
+          <div class="plan-name">บุคคลทั่วไป (Personal)</div>
+          <div class="plan-desc">สำหรับครู, อาจารย์, นักแปลเอกสาร และผู้ใช้งานทั่วไป</div>
+          <div class="plan-price">1,290 ฿ <span>/ ตลอดชีพ</span></div>
+          <ul class="plan-features">
+            <li>สิทธิ์ใช้งานตลอดชีพ (Lifetime)</li>
+            <li>โควต้า 1 เครื่องคอมพิวเตอร์</li>
+            <li>ย้ายเครื่องได้เมื่อเปลี่ยนคอมพิวเตอร์ใหม่</li>
+            <li>อัปเดตตารางและคำศัพท์เบรลล์ฟรี</li>
+            <li>ออกรหัสคีย์และใช้งานได้ทันที</li>
+          </ul>
+          <button class="btn-primary" style="justify-content: center;"
+            onclick="openCheckout('personal', 'บุคคลทั่วไป (Personal Lifetime)', 1290, 1)">
+            💳 สั่งซื้อทันที (พร้อมเพย์)
+          </button>
+        </div>
+
+        <!-- Plan 3 -->
+        <div class="pricing-card">
+          <div class="plan-name">สถานศึกษา / องค์กร (Lab)</div>
+          <div class="plan-desc">สำหรับโรงเรียนสอนคนตาบอด มหาวิทยาลัย หรือห้องสมุด</div>
+          <div class="plan-price">4,900 ฿ <span>/ ตลอดชีพ</span></div>
+          <ul class="plan-features">
+            <li>สิทธิ์ใช้งานตลอดชีพ <strong>5 เครื่อง</strong></li>
+            <li>จัดการและรีเซ็ตเครื่องผ่าน Web Portal</li>
+            <li>ออกใบเสนอราคา / ใบเสร็จรับเงินสำหรับโรงเรียน</li>
+            <li>บริการแนะนำการตั้งค่าเครื่องพิมพ์เบรลล์</li>
+            <li>ทีมสนับสนุนทางเทคนิคเฉพาะทาง</li>
+          </ul>
+          <button class="btn-primary"
+            style="justify-content: center; background: linear-gradient(135deg, #4f46e5, #7c3aed);"
+            onclick="openCheckout('education', 'สถานศึกษา / องค์กร (5 เครื่อง)', 4900, 5)">
+            🏫 สั่งซื้อสำหรับสถานศึกษา
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Checkout & PromptPay Modal -->
+  <div class="modal-backdrop" id="checkoutModal">
+    <div class="checkout-modal">
+      <div class="modal-head">
+        <h3 style="font-size: 20px; font-weight: 700;" id="checkoutPlanTitle">สั่งซื้อลิขสิทธิ์ SiamBraille 1.0</h3>
+        <button class="modal-close" onclick="closeCheckout()">&times;</button>
+      </div>
+
+      <!-- Step 1: Customer Info Form -->
+      <form id="orderForm" onsubmit="handleProceedToPay(event)">
+        <div class="form-group">
+          <label>ชื่อ-นามสกุล / ผู้สั่งซื้อ *</label>
+          <input type="text" id="cust_name" class="form-control" placeholder="เช่น อาจารย์สมเกียรติ มั่นคง" required>
+        </div>
+
+        <div class="form-group">
+          <label>หน่วยงาน / โรงเรียน (ถ้ามี)</label>
+          <input type="text" id="cust_org" class="form-control" placeholder="เช่น โรงเรียนสอนคนตาบอด...">
+        </div>
+
+        <div class="form-group">
+          <label>เบอร์โทรศัพท์ติดต่อ *</label>
+          <input type="tel" id="cust_phone" class="form-control" placeholder="เช่น 081-234-5678" required>
+        </div>
+
+        <div class="form-group">
+          <label>อีเมลสำหรับรับรหัสคีย์ (License Key) *</label>
+          <input type="email" id="cust_email" class="form-control" placeholder="เช่น yourname@gmail.com" required>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+          ดำเนินการชำระเงิน (ไปยัง QR พร้อมเพย์) →
+        </button>
+      </form>
+
+      <!-- Step 2: PromptPay Payment Screen (Initially Hidden) -->
+      <div id="paymentScreen" style="display: none;">
+        <div class="promptpay-box">
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            สแกนเพื่อชำระเงินผ่านแอปธนาคารทุกแห่ง (PromptPay)</div>
+          <div class="amount-display" id="payAmountDisplay">1,290.00 บาท</div>
+
+          <div class="qr-container">
+            <img id="promptpayQrImg" src="" alt="PromptPay QR Code"
+              style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+          </div>
+
+          <div style="font-size: 13px; color: #cbd5e1; margin-top: 8px;">
+            ชื่อบัญชี: <strong style="color: #38bdf8;">สยามเบรลล์ ซอฟต์แวร์</strong><br>
+            พร้อมเพย์: <strong id="promptpayIdDisplay">081-999-9999</strong>
+          </div>
+        </div>
+
+        <!-- Mini QR Slip Upload Dropzone -->
+        <div class="slip-upload-area" id="slipDropArea" onclick="document.getElementById('slipFileInput').click()">
+          <input type="file" id="slipFileInput" accept="image/*" style="display:none;"
+            onchange="handleSlipFile(this.files[0])">
+          <div id="slipUploadPrompt">
+            <div style="font-size: 32px; margin-bottom: 6px;">📤</div>
+            <div style="font-size: 14px; font-weight: 600; color: #38bdf8;">คลิกหรือลากสลิปโอนเงินมาวางที่นี่</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+              ระบบจะถอดรหัส Mini QR บนสลิปของธนาคารโดยอัตโนมัติ (ไม่ใช้ AI)
+            </div>
+          </div>
+          <div id="slipScanningPrompt" style="display: none; padding: 10px;">
+            <div style="font-size: 24px; animation: spin 1s infinite linear;">⚙️</div>
+            <div style="font-size: 13px; color: #38bdf8; margin-top: 6px;">กำลังอ่าน Mini QR บนสลิป...</div>
+          </div>
+          <div id="slipResultBox"
+            style="display: none; text-align: left; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 12px; padding: 14px; margin-top: 10px;">
+            <div
+              style="color: #34d399; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">✅</span> ตรวจพบสลิปธนาคารแท้ (Mini QR Verified)
+            </div>
+            <div style="font-size: 13px; color: #f1f5f9; margin-top: 8px; line-height: 1.6;">
+              🏦 <strong>ธนาคาร:</strong> <span id="slipBankName" style="color: #38bdf8;">-</span><br>
+              🔖 <strong>รหัสธุรกรรม (TransRef):</strong> <span id="slipTransRef"
+                style="font-family: monospace; color: #fbbf24; font-weight: 600;">-</span>
+            </div>
+          </div>
+          <div id="slipErrorBox"
+            style="display: none; text-align: left; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 12px; padding: 12px; margin-top: 10px;">
+            <div style="color: #f87171; font-weight: 600; font-size: 13px;" id="slipErrorMessage">
+              ⚠️ ไม่พบ Mini QR บนรูปภาพ กรุณาใช้สลิปที่มี QR Code ชัดเจน
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="width: 100%; justify-content: center; opacity: 0.6;" id="btnConfirmPay"
+          onclick="confirmPaymentAndIssueKey()" disabled>
+          🔒 กรุณาแนบสลิปเพื่อตรวจ Mini QR
+        </button>
+      </div>
+
+      <!-- Step 3: Success Screen (Shows Key & Download Links) -->
+      <div id="successScreen" style="display: none;" class="success-box">
+        <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+        <h3 style="font-size: 22px; font-weight: 700; color: #34d399;">สั่งซื้อและออกสิทธิ์สำเร็จ!</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
+          รหัสลิขสิทธิ์ของคุณถูกสร้างและลงทะเบียนในระบบเรียบร้อยแล้ว
+        </p>
+
+        <div class="key-reveal-box" id="revealedKey">
+          SB-LIFT-XXXX-XXXX-XXXX
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn-secondary" onclick="copyRevealedKey()">📋 คัดลอกรหัสคีย์</button>
+          <a href="#" id="downloadLicFileBtn" class="btn-secondary">📥 ดาวน์โหลด license.key</a>
+          <a href="/api/download/setup" class="btn-primary">🚀 ดาวน์โหลดตัวติดตั้งโปรแกรม</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>© 2026 SiamBraille 1.0 — โปรแกรมแปลอักษรเบรลล์ภาษาไทยตามมาตรฐาน พ.ศ. 2564</p>
+      <p style="margin-top: 8px; font-size: 12px; opacity: 0.7;">
+        พัฒนาเพื่อการศึกษาและส่งเสริมการเข้าถึงข้อมูลข่าวสารของผู้มีความบกพร่องทางการมองเห็น
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Live Braille Simulation Dictionary for Web Demo
+    const THAI_BRAILLE_MAP = {
+      'ก': '⠅', 'ข': '9', 'ฃ': '⠹', 'ค': '⠅', 'ฅ': '⠹', 'ฆ': '⠅',
+      'ง': '⠣', 'จ': '⠚', 'ฉ': '⠡', 'ช': '⠡', 'ซ': '⠮', 'ฌ': '⠡',
+      'ญ': '⠹', 'ด': '⠙', 'ต': '⠞', 'ถ': '⠹', 'ท': '⠹', 'ธ': '⠹',
+      'น': '⠝', 'บ': '⠃', 'ป': '⠏', 'ผ': '⠹', 'ฝ': '⠮', 'พ': '⠏',
+      'ฟ': '⠋', 'ภ': '⠏', 'ม': '⠍', 'ย': '⠽', 'ร': '⠗', 'ล': '⠇',
+      'ว': '⠺', 'ศ': '⠎', 'ษ': '⠎', 'ส': '⠎', 'ห': '⠓', 'ฬ': '⠇',
+      'อ': '⠕', 'ฮ': '⠓', 'ะ': '⠢', 'ั': '⠢', 'า': '⠤', 'ำ': '⠵',
+      'ิ': '⠊', 'ี': '⠦', 'ึ': '⠪', 'ื': '⠪', 'ุ': '⠥', 'ู': '⠥',
+      'เ': '⠱', 'แ': '⠣', 'โ': '⠹', 'ใ': '⠯', 'ไ': '⠺', '็': '⠢',
+      '่': '⠂', '้': '⠦', '๊': '⠲', '๋': '⠴', '์': '⠠',
+      '0': '⠚', '1': '⠁', '2': '⠃', '3': '⠉', '4': '⠙', '5': '⠑',
+      '6': '⠋', '7': '⠛', '8': '⠓', '9': '⠊', ' ': ' ', '.': '⠲'
+    };
+
+    function translateDemo() {
+      const text = document.getElementById('demoInput').value;
+      let res = '';
+      for (let ch of text) {
+        res += THAI_BRAILLE_MAP[ch] || ch;
+      }
+      document.getElementById('demoOutput').textContent = res || '⠠⠤';
+    }
+
+    // ==========================================
+    // ระบบสร้าง PromptPay QR (BOT EMVCo Standard)
+    // ==========================================
+    function crc16(data) {
+      let crc = 0xFFFF;
+      for (let i = 0; i < data.length; i++) {
+        let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xFF;
+        x ^= x >> 4;
+        crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
+      }
+      return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function generatePromptPayPayload(targetId, amount) {
+      const cleanId = targetId.replace(/[^0-9]/g, '');
+      let subtag = '';
+      if (cleanId.length === 10 && cleanId.startsWith('0')) {
+        const phone = '0066' + cleanId.substring(1);
+        subtag = '01' + phone.length.toString().padStart(2, '0') + phone;
+      } else if (cleanId.length === 13) {
+        subtag = '02' + cleanId.length.toString().padStart(2, '0') + cleanId;
+      } else {
+        const phone = '0066' + cleanId;
+        subtag = '01' + phone.length.toString().padStart(2, '0') + phone;
+      }
+
+      const aid = 'A000000677010111';
+      const tag29_value = '00' + aid.length.toString().padStart(2, '0') + aid + subtag;
+      const tag29 = '29' + tag29_value.length.toString().padStart(2, '0') + tag29_value;
+
+      let payload = '000201' + (amount > 0 ? '010212' : '010211') + tag29 + '5303764';
+      if (amount > 0) {
+        const amtStr = Number(amount).toFixed(2);
+        payload += '54' + amtStr.length.toString().padStart(2, '0') + amtStr;
+      }
+      payload += '5802TH6304';
+      return payload + crc16(payload);
+    }
+
+    const THAI_BANKS = {
+      '002': 'ธนาคารกรุงเทพ (BBL)',
+      '004': 'ธนาคารกสิกรไทย (KBANK)',
+      '006': 'ธนาคารกรุงไทย (KTB)',
+      '011': 'ธนาคารทหารไทยธนชาต (TTB)',
+      '014': 'ธนาคารไทยพาณิชย์ (SCB)',
+      '025': 'ธนาคารกรุงศรีอยุธยา (BAY)',
+      '030': 'ธนาคารออมสิน (GSB)',
+      '034': 'ธ.ก.ส. (BAAC)',
+      '065': 'ธนาคารธนชาต',
+      '067': 'ธนาคารทิสโก้ (TISCO)',
+      '069': 'ธนาคารเกียรตินาคินภัทร (KKP)',
+      '073': 'ธนาคารแลนด์ แอนด์ เฮ้าส์ (LH Bank)',
+      '140': 'TrueMoney Wallet'
+    };
+
+    function parseTLV(payload) {
+      const data = {};
+      let i = 0;
+      while (i < payload.length) {
+        const tag = payload.substring(i, i + 2);
+        if (!tag || tag.length < 2) break;
+        const lenStr = payload.substring(i + 2, i + 4);
+        if (!/^\d+$/.test(lenStr)) break;
+        const len = parseInt(lenStr, 10);
+        const val = payload.substring(i + 4, i + 4 + len);
+        data[tag] = val;
+        i += 4 + len;
+      }
+      return data;
+    }
+
+    function parseSlipQR(payload) {
+      try {
+        const root = parseTLV(payload);
+        const tag00 = root['00'] || '';
+        const sub = parseTLV(tag00);
+        const apiVersion = sub['00'];
+        const bankCode = sub['01'];
+        const transRef = sub['02'];
+        return {
+          apiVersion,
+          bankCode,
+          bankName: THAI_BANKS[bankCode] || `ธนาคารรหัส ${bankCode}`,
+          transRef,
+          isValid: Boolean(apiVersion === '000001' && bankCode && transRef)
+        };
+      } catch (err) {
+        return { isValid: false };
+      }
+    }
+
+    // Checkout State
+    let currentOrderPlan = { id: 'personal', name: 'บุคคลทั่วไป', price: 1290, devices: 1 };
+    let promptPayTargetId = '0819999999'; // สามารถตั้งค่าได้ใน /admin
+    window.verifiedSlipPayload = '';
+
+    function openCheckout(planId, planName, price, devices) {
+      currentOrderPlan = { id: planId, name: planName, price: price, devices: devices };
+      document.getElementById('checkoutPlanTitle').textContent = `สั่งซื้อ: ${planName}`;
+      document.getElementById('payAmountDisplay').textContent = `${price.toLocaleString()}.00 บาท`;
+      document.getElementById('promptpayIdDisplay').textContent = promptPayTargetId;
+
+      // Gen real PromptPay QR Code
+      const ppPayload = generatePromptPayPayload(promptPayTargetId, price);
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(ppPayload)}`;
+      document.getElementById('promptpayQrImg').src = qrUrl;
+
+      // Reset slip state
+      window.verifiedSlipPayload = '';
+      document.getElementById('slipUploadPrompt').style.display = 'block';
+      document.getElementById('slipScanningPrompt').style.display = 'none';
+      document.getElementById('slipResultBox').style.display = 'none';
+      document.getElementById('slipErrorBox').style.display = 'none';
+      const btn = document.getElementById('btnConfirmPay');
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.textContent = '🔒 กรุณาแนบสลิปเพื่อตรวจ Mini QR';
+
+      // Reset screens
+      document.getElementById('orderForm').style.display = 'block';
+      document.getElementById('paymentScreen').style.display = 'none';
+      document.getElementById('successScreen').style.display = 'none';
+      document.getElementById('checkoutModal').style.display = 'flex';
+    }
+
+    function closeCheckout() {
+      document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    function handleProceedToPay(e) {
+      e.preventDefault();
+      document.getElementById('orderForm').style.display = 'none';
+      document.getElementById('paymentScreen').style.display = 'block';
+    }
+
+    // ==========================================
+    // ฟังก์ชันอ่าน Mini QR จากรูปภาพสลิปในเบราว์เซอร์
+    // ==========================================
+    function handleSlipFile(file) {
+      if (!file) return;
+
+      const uploadPrompt = document.getElementById('slipUploadPrompt');
+      const scanningPrompt = document.getElementById('slipScanningPrompt');
+      const resultBox = document.getElementById('slipResultBox');
+      const errorBox = document.getElementById('slipErrorBox');
+      const btn = document.getElementById('btnConfirmPay');
+
+      uploadPrompt.style.display = 'none';
+      scanningPrompt.style.display = 'block';
+      resultBox.style.display = 'none';
+      errorBox.style.display = 'none';
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let qrCode = null;
+
+          if (typeof jsQR !== 'undefined') {
+            qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: 'attemptBoth'
+            });
+          }
+
+          scanningPrompt.style.display = 'none';
+
+          if (qrCode && qrCode.data) {
+            const slipInfo = parseSlipQR(qrCode.data);
+            if (slipInfo.isValid) {
+              window.verifiedSlipPayload = qrCode.data;
+              document.getElementById('slipBankName').textContent = slipInfo.bankName;
+              document.getElementById('slipTransRef').textContent = slipInfo.transRef;
+              resultBox.style.display = 'block';
+
+              btn.disabled = false;
+              btn.style.opacity = '1';
+              btn.textContent = '✅ ยืนยันสลิปและรับรหัสคีย์ทันที';
+              return;
+            }
+          }
+
+          // กรณีไม่พบ QR ที่เข้าข่าย Mini QR
+          uploadPrompt.style.display = 'block';
+          errorBox.style.display = 'block';
+          document.getElementById('slipErrorMessage').textContent =
+            '⚠️ ไม่พบ Mini QR ของธนาคารบนรูปภาพ กรุณาตรวจสอบว่าเป็นสลิปการโอนที่มี QR Code ชัดเจน';
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+          btn.textContent = '🔒 กรุณาแนบสลิปเพื่อตรวจ Mini QR';
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Drag and drop listeners
+    const dropArea = document.getElementById('slipDropArea');
+    if (dropArea) {
+      ['dragenter', 'dragover'].forEach(name => {
+        dropArea.addEventListener(name, (e) => { e.preventDefault(); dropArea.classList.add('dragover'); }, false);
+      });
+      ['dragleave', 'drop'].forEach(name => {
+        dropArea.addEventListener(name, (e) => { e.preventDefault(); dropArea.classList.remove('dragover'); }, false);
+      });
+      dropArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) handleSlipFile(files[0]);
+      }, false);
+    }
+
+    async function confirmPaymentAndIssueKey() {
+      if (!window.verifiedSlipPayload) {
+        alert('กรุณาแนบสลิปโอนเงินที่มี Mini QR ก่อนดำเนินการ');
+        return;
+      }
+
+      const btn = document.getElementById('btnConfirmPay');
+      btn.disabled = true;
+      btn.textContent = '⏳ กำลังตรวจสอบ Mini QR และออกรหัสคีย์...';
+
+      const payload = {
+        slip_qr_payload: window.verifiedSlipPayload,
+        cust_name: document.getElementById('cust_name').value.trim(),
+        cust_email: document.getElementById('cust_email').value.trim(),
+        cust_phone: document.getElementById('cust_phone').value.trim(),
+        cust_org: document.getElementById('cust_org').value.trim() || 'สั่งซื้อผ่านหน้าเว็บ',
+        plan_id: currentOrderPlan.id,
+        devices: currentOrderPlan.devices
+      };
+
+      try {
+        const res = await fetch('/api/checkout/verify-slip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const key = typeof data.key === 'object' ? data.key.key : data.key;
+          document.getElementById('revealedKey').textContent = key;
+          document.getElementById('downloadLicFileBtn').href = `/api/licenses/${key}/download`;
+
+          document.getElementById('paymentScreen').style.display = 'none';
+          document.getElementById('successScreen').style.display = 'block';
+        } else {
+          alert('❌ ตรวจสอบสลิปไม่สำเร็จ:\n' + (data.detail || data.message || 'ข้อมูลสลิปไม่ถูกต้อง'));
+        }
+      } catch (err) {
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✅ ยืนยันสลิปและรับรหัสคีย์ทันที';
+      }
+    }
+
+    function copyRevealedKey() {
+      const key = document.getElementById('revealedKey').textContent.trim();
+      navigator.clipboard.writeText(key);
+      alert('คัดลอกรหัสคีย์ ' + key + ' แล้ว!');
+    }
+
+    // ==========================================
+    // Dynamic Pricing Cards Loader
+    // ==========================================
+    async function loadDynamicPricing() {
+      try {
+        const res = await fetch('/api/packages');
+        if (!res.ok) return;
+        const resData = await res.json();
+        const pkgs = resData.data;
+        if (!pkgs || pkgs.length === 0) return;
+
+        const grid = document.getElementById('pricingGrid');
+        if (!grid) return;
+
+        let html = `
+          <div class="pricing-card">
+            <div class="plan-name">ทดลองใช้งานฟรี</div>
+            <div class="plan-desc">สำหรับทดสอบความแม่นยำและฟังก์ชันการพิมพ์</div>
+            <div class="plan-price">0 ฿ <span>/ 14 วัน</span></div>
+            <ul class="plan-features">
+              <li>ใช้งานได้ 1 เครื่องคอมพิวเตอร์</li>
+              <li>แปลอักษรเบรลล์ได้ทุกหมวดหมู่</li>
+              <li>สั่งพิมพ์ออกกระดาษเบรลล์ได้จริง</li>
+              <li>รองรับเสียงอ่านจอภาพ NVDA</li>
+            </ul>
+            <a href="/api/download/setup" class="btn-secondary" style="justify-content: center;">ดาวน์โหลดใช้งานฟรี</a>
+          </div>
+        `;
+
+        pkgs.forEach(p => {
+          const isPop = p.popular;
+          const featHtml = (p.features || []).map(f => `<li>${f}</li>`).join('');
+          const badgeHtml = p.badge ? `<div class="popular-tag">${p.badge}</div>` : '';
+          const isEdu = p.id.includes('edu') || p.id.includes('lab') || (p.max_devices && p.max_devices > 1);
+          const btnBg = isEdu ? 'background: linear-gradient(135deg, #4f46e5, #7c3aed);' : '';
+          const btnText = isEdu ? `🏫 สั่งซื้อ (${p.max_devices} เครื่อง)` : '💳 สั่งซื้อทันที (พร้อมเพย์)';
+
+          html += `
+            <div class="pricing-card ${isPop ? 'popular' : ''}">
+              ${badgeHtml}
+              <div class="plan-name">${p.name}</div>
+              <div class="plan-desc">${p.desc || ''}</div>
+              <div class="plan-price">${Number(p.price).toLocaleString()} ฿ <span>/ ${p.period || 'ตลอดชีพ'}</span></div>
+              <ul class="plan-features">
+                ${featHtml}
+              </ul>
+              <button class="btn-primary" style="justify-content: center; ${btnBg}" onclick="openCheckout('${p.id}', '${p.name}', ${p.price}, ${p.max_devices || 1})">
+                ${btnText}
+              </button>
+            </div>
+          `;
+        });
+
+        grid.innerHTML = html;
+      } catch (e) {
+        console.warn('Load dynamic pricing failed, using fallback:', e);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadDynamicPricing);
+  </script>
+</body>
+
+</html>

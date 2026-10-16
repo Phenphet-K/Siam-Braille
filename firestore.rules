@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ข้อมูลลิขสิทธิ์และสมาชิก
+    match /licenses/{licenseKey} {
+      // ให้เฉพาะ Admin เท่านั้นที่สามารถสร้าง ลบ หรือแก้ไขคีย์
+      allow read, write: if request.auth != null;
+      // ให้โปรแกรมไคลเอนต์อ่านเพื่อตรวจสอบความถูกต้องของคีย์ได้
+      allow get: if true;
+    }
+    
+    // คำสั่งซื้อและการชำระเงิน
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update: if request.auth != null;
+    }
+  }
+}

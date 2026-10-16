@@ -1,0 +1,228 @@
+# Ascii math conversion table
+# Created and maintained by: Dang Hoai Phuc, danghoaiphuc@gmail.com
+
+#space \s 0 blank
+#space \t 9 tab
+#space \x000a 0 newline
+#space \x000c 0
+#space \x000d 0 carriage return
+#space \x001b 1b escape character for html back-translation
+#space \x00A0 a NO-BREAK SPACE <noBreak> 0020 NON-BREAKING SPACE 
+
+include latinLetterDef6Dots.uti
+include digits6Dots.uti
+
+# signs and punctuations definition
+#include ascii-math-signs.uti
+
+# Braille indicators definition
+#numsign 3456
+#letsign 56
+
+# caps definitions
+capsletter 6
+begcapsword 456
+endcapsword 46-13
+lencapsphrase 5
+begcapsphrase 46-46
+begcaps 46-46
+endcaps 46-13
+
+##############
+# Operations #
+##############
+always times 5-236
+always pm 456-235
+always // 456-34
+always propto 456-5-2356
+
+###############
+# Comparisons #
+###############
+always leq 456-4-126
+always geq 456-4-345
+always ne 5-2356-4-156
+always cong 456-35
+always approx 45-35
+always ll 46-4-126
+always gg 46-4-345
+always equiv 456-123456
+always mathratio 25
+always sim 4-35
+always simeq 456-35
+
+################
+# Math symbols #
+################
+always sqrt 146
+always sqrte 346
+always sin 234-35
+always cos 14-135-234
+always tan 2345-1-1345
+always cot 14-135-2345
+always csc 14-234-14
+always sec 234-15-13
+always int 2346
+always oint 4-2346
+always partial 4-145
+always sum 46-234
+
+##########
+# Degree #
+##########
+always degree 45-245
+always celsius 45-245-46-14
+always fahrenheit 45-245-46-124
+
+###############
+# Set symbols #
+###############
+always cup 46-235
+always cap 46-236
+always bigcap 46-235
+always emptyset 4-245
+always in 45-15
+always ni 4-45-15
+always subset 45-126
+always subseteq 456-45-126
+always subsetneq 46-45-126
+always supset 45-345
+always supseteq 456-45-345
+always supsetneq 46-45-345
+
+#################
+# Other symbols #
+#################
+always parallel 3456-123
+always bot 3456-36
+always infty 3456-123456
+always exists 45-26
+always forall 45-1
+always measuredrightangle 3456-456-246
+# ,angstrom thay cho Angstrom
+always ,angstrom 6-45-1246-1
+always bigoplus 1246-123456-246-5-345
+always neg 4-1456
+always vee 4-235
+always wedge 4-236
+always because 4-34
+# v,dash thay cho vDash
+always v,dash 45-456-25
+always bumpeq 45-5-2346
+always hash 456-1456
+always angle 456-246
+always measuredangle 46-456-246
+always Doteq 46-5-2346
+always cdot 5-256
+always ast 5-35
+always circ 5-356
+always vartriangleleft 4-456-126
+always vartriangleright 4-456-345
+always nabla 45-145
+always trianglelefteq 456-456-126
+always trianglerighteq 456-456-345
+always therefore 6-16
+
+##########
+# Arrows #
+##########
+always to 1256-135
+always leftarrow 1256-246
+always uparrow 1256-346
+always downarrow 1256-146
+always leftrightarrow 1256-2456-1235-135
+always leftrightharpoons 1256-4-1235-246-12456-1256-6-1235-135
+always rightleftarrows 1256-135-12456-1256-246
+always ,rightarrow 1256-2356-2356-135
+always bigtriangleup 1246-3456-14
+always rightarrowtail 1256-1235-1235-135
+always leftarrowtail 1256-1235-1235-246
+always mapsto 1256-1256-1235-135
+always searrow 1256-126
+always nearrow 1256-134
+always nwarrow 1256-156
+always twoheadrightarrow 1256-25-25-1235-1235-135
+always twoheadleftarrow 1256-25-25-1235-1235-246
+always rsh 1256-256-256-346
+always curvearrowright 1256-26-26-135
+always swarrow 1256-345
+always curvearrowleft 1256-35-35-246
+
+############
+# Brackets #
+############
+always left( 6-5-126
+always right) 6-5-345
+always left[ 6-46-126
+always right] 6-46-345
+always left{ 6-456-126
+always right} 6-456-345
+always left| 6-456-1256
+always right| 6-456-1256
+always bracket( 126
+always bracket) 345
+always divide/ 34
+#always open/ 12356
+#always close/ 12356-5
+
+#################
+# Bars, Vectors #
+#################
+always vec 45-156
+always overline 156
+always hat 5-156
+always breve 46-456-156
+
+#################
+# Greek letters #
+#################
+always alpha 46-1
+always beta 46-12
+always gamma 46-1245
+always delta 46-145
+always epsilon 46-15
+always zeta 46-1356
+always eta 46-156
+always theta 46-1456
+always iota 46-24
+always kappa 46-13
+always lambda 46-123
+always mu 46-134
+always nu 46-1345
+always xi 46-1346
+always omicron 46-135
+always pi 46-1234
+always rho 46-1235
+always sigma 46-234
+always tau 46-2345
+always upsilon 46-136
+always phi 46-124
+always chi 46-12346
+always psi 46-13456
+always omega 46-2456
+always ,alpha 6-46-1
+always ,beta 6-46-12
+always ,gamma 6-46-1245
+always ,delta 6-46-145
+always ,epsilon 6-46-15
+always ,zeta 6-46-1356
+always ,eta 6-46-156
+always ,theta 6-46-1456
+always ,iota 6-46-24
+always ,kappa 6-46-13
+always ,lambda 6-46-123
+always ,mu 6-46-134
+always ,nu 6-46-1345
+always ,xi 6-46-1346
+always ,omicron 6-46-135
+always ,pi 6-46-1234
+always ,rho 6-46-1235
+always ,sigma 6-46-234
+always ,tau 6-46-2345
+always ,upsilon 6-46-136
+always ,phi 6-46-124
+always ,chi 6-46-12346
+always ,psi 6-46-13456
+always ,omega 6-46-2456
+
+include en-ueb-g1.ctb

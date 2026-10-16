@@ -1,0 +1,510 @@
+=== MAIN WINDOW (TSDIAPPFORM) COMPONENTS & PROPERTIES ===
+
+Window: TSDIAppForm
+
+[Component] TPF0
+
+[Component] TSDIAppForm
+  Hint
+    -> Text: 9โปรแกรม แปลเอกสารเป็นอักษรเบรลล์ (TBT for windows V 1.83)
+  biSystemMenu
+  Caption
+
+[Component] TBT for windows 
+  ๓	Font.Name
+    -> Text: ภภภ
+    -> Text: ปp
+    -> Text: ป
+    -> Text: ป
+    -> Text: ป
+    -> Text: ปป
+    -> Text: ฐ3
+    -> Text: ป
+    -> Text: ปป
+    -> Text: ปป
+    -> Text: ปป
+    -> Text: ปป
+  Menu
+  	MainMenu1
+
+[Component] TToolBar
+  ID: ToolBar1
+  ParentShowHint
+  ShowHint	
+
+[Component] TToolButton
+  Action
+  ID: FileNew1
+
+[Component] TToolButton
+  Action
+
+[Component] TToolButton
+  Action
+
+[Component] TToolButton
+  Caption
+
+[Component] TToolButton
+  Action
+
+[Component] TToolButton
+  Action
+
+[Component] TToolButton
+  Action
+
+[Component] TSpeedButton
+  Hint
+    -> Text: กดปุ่มเพื่อแปลเอกสาร
+  Caption
+    -> Text: แปล
+    -> Text: BM๖
+    -> Text: ฟฟฟ
+    -> Text: UUUPฬศUUUPUUU
+    -> Text: ฬฬฬศ
+    -> Text: ฮฬฬศ
+    -> Text: ฮ์ฬศ
+  ParentShowHint
+  ShowHint	
+  OnClick
+
+[Component] TPanel
+  Caption
+  Hint
+    -> Text: อักษรปกติ(Normal Font)
+  ๋	Font.Name
+  ParentShowHint
+  ShowHint	
+  Hint
+    -> Text: อักษรเบรลล์(Braille Font)
+  ่	Font.Name
+  ParentShowHint
+  ShowHint	
+
+[Component] TStatusBar
+    -> Text:      ข้อมูลไฟล์ที่แปลแล้ว  
+
+[Component] TStatusBar	StatusBar
+  AutoHint	
+
+[Component] TActionList
+  ActionList1
+
+[Component] TAction
+  ID: FileNew1
+  Caption
+  Hint
+  ShortCut
+
+[Component] TAction	FileOpen1
+  Caption
+  Hint
+  ShortCut
+
+[Component] TAction	FileSave1
+  Caption
+  Hint
+  ShortCut
+
+[Component] TAction
+  Caption
+  Hint
+
+[Component] TAction	FileExit1
+  Caption
+  Hint
+
+[Component] TEditCut
+  Caption
+  Hint
+  ShortCut
+  Caption
+  Hint
+  ShortCut
+
+[Component] TEditPaste
+  Caption
+  Hint
+  ShortCut
+
+[Component] TAction
+  Caption
+  Hint
+
+[Component] TImageList
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟฟ
+    -> Text: ๗
+    -> Text: ๖
+    -> Text: รฟเ
+    -> Text: ๓ว
+    -> Text: sว
+    -> Text: ว
+    -> Text: ว
+    -> Text: ใ
+    -> Text: ๑
+    -> Text: ๏๑็ภ
+    -> Text: ฿ร๘ฯภ
+
+[Component] TOpenDialog
+
+[Component] TSaveDialog
+  	TMainMenu	MainMenu1
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เมนูไฟล์
+  	TMenuItem
+  Action
+  ID: FileNew1
+  Hint
+    -> Text: เปิดไฟล์ใหม่
+  	TMenuItem
+  Action
+  Hint
+    -> Text: เปิดไฟล์เก่า
+  	TMenuItem
+  ID: Translate1
+  Caption
+  Hint
+    -> Text: แปลเป็นเบรลล์
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ส่งไปเครื่องพิมพ์ปกติ
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: พิมพ์อักษรปกติ
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: พิมพ์เป็นจุดเบรลล์
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ส่งไปเครื่องพิมพ์เบรลล์
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ตั้งค่าเครื่องพิมพ์
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: บันทึก
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: บันทึกเป็น
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: บันทึกไฟล์ทั้งหมด
+  ShortCut
+  OnClick
+  	TMenuItem	CloseAll1
+  Caption
+  Hint
+    -> Text: ปิดไฟล์ทั้งหมด
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  	TMenuItem
+  Action
+  Hint
+    -> Text: ออกจากการทำงาน
+  ShortCut
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: 	เมนูแก้ไข
+  	TMenuItem
+  Action
+  Hint
+    -> Text: ตัดข้อความ
+  	TMenuItem
+  Action
+  Hint
+    -> Text: คัดลอกข้อความ
+  	TMenuItem	PasteItem
+  Action
+  Hint
+    -> Text: วางข้อความ
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ค้นหา
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: แทนที่
+  ShortCut
+  OnClick
+  	TMenuItem	WordWrap1
+  Caption
+  Hint
+    -> Text: ตัดข้อความ
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ตั้งค่า Font ระบบ
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: แสดงเต็มหน้าจอ
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: สลับหน้าต่าง
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เมนูตั้งค่า
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ตั้งค่าหน้ากระดาษการแปล
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ตั้งตำแหน่งหมายเลขหน้า
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: บนซ้าย
+  OnClick
+  	TMenuItem	TopRight1
+  Caption
+  Hint
+    -> Text: บนขวา
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ล่างซ้าย
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ล่างขวา
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เลือก Printer Port
+  	TMenuItem
+  Caption
+  Hint
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เลือกคุณสมบัติเครื่องพิมพ์
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: พิมพ์หน้าเดียว
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: พิมพ์สองหน้า
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: โหมดหน้ากระดาษ
+  	TMenuItem
+  Caption
+  Hint
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ตั้งค่าตัวอักษรเริ่มต้น
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เลือก Terminal font
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เลือก Microsoft Sans Serif font
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ตั้งค่าคีย์บอร์ด
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: คีย์บอร์ดไทย
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: คีย์บอร์ดอังกฤษ
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: "เลือกระดับการแปลอักษรเบรลล์ภาษาไทย
+  	TMenuItem(Grade1withsomeshotfromthaibraillelevel11
+  Caption
+  Hint
+    -> Text: ระดับ 1
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ระดับ 2
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: %เลือกระดับการแปลอักษรเบรลล์ภาษาอังกฤษ
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ระดับ 1
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ระดับ 2
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: เมนูช่วยเหลือ
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: วิธีการใช้โปรแกรม
+  ShortCut
+  OnClick
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: สลับภาษา
+  ShortCut
+  OnClick
+  	TMenuItem
+  Action
+  Caption
+  Hint
+    -> Text: เกี่ยวกับโปรแกรม
+  	TMenuItem
+  Caption
+  Hint
+    -> Text: ติดต่อสอบถาม
+  OnClick
+
+[Component] TPrintDialog
+
+[Component] TPrinterSetupDialog
+
+[Component] TFontDialog
+  ๕	Font.Name
+
+[Component] TFindDialog
+
+[Component] TReplaceDialog

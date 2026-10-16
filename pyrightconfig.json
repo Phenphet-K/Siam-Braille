@@ -1,0 +1,5 @@
+{
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": false,
+    "reportIncompatibleMethodOverride": "none"
+}

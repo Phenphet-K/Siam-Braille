@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# C extensions & build artifacts
+build/
+dist/
+*.spec
+*.tmp
+
+# Installer Executables & Large Binaries
+*.exe
+*.dll
+*.iso
+*.zip
+*.7z
+*.tar.gz
+public/SiamBraille_Setup*.exe
+*.pdf
+license.key
+licenses_db.json
+
+# Credentials, Service Account Keys, Secrets
+*firebase-adminsdk*.json
+*stripe api key*
+*api_key*
+*secret*
+.env
+.env.*
+
+# Logs, outputs, temporary files
+*.log
+stdout.txt
+stderr.txt
+.vscode/
+.idea/
+.system_generated/

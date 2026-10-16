@@ -1,0 +1,386 @@
+#-index-name: Standard Music Font Layout Braille
+#-display-name: SMUFL Glyph Names
+#
+#+locale: en-us
+#+type: music
+#+contraction: no
+#+grade: 0
+#+dots: 6
+#+direction: forward
+#+system: English
+#+description: This table is originally designed for Sao Mai Braille (SMB) software to get Braille output for music SMUFL  symbols parsed from MusicXML file. Braille definitions are based on Music Braille Code 2015 (MBC) and it might be useful to have more users to contribute more definitions. In addition, screen readers might use it to show correct Braille for music symbols in text  document.
+#
+#-copyright: Sao Mai Center for the Blind <www.saomaicenter.org/en>
+#-license: LGPLv2.1
+#
+#  Copyright (C) 2023 by Sao Mai Center for the Blind <www.saomaicenter.org/en>
+#
+#  This file is part of liblouis.
+#
+#  liblouis is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation, either version 2.1 of the
+#  License, or (at your option) any later version.
+#
+#  liblouis is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with liblouis. If not, see
+#  <http://www.gnu.org/licenses/>.
+#
+# Created and maintained by: Dang Hoai Phúc <danghoaiphuc@gmail.com>
+#
+#-author: Dang Hoai Phúc <danghoaiphuc@gmail.com> and Haipeng Hu <hhpcomposer@gmail.com>
+#-maintainer-name: Dang Hoai Phúc
+#-maintainer-email: danghoaiphuc@gmail.com
+#
+#-updated: 2023-11-23
+#
+# Based on <http://www.brailleauthority.org/music/Music_Braille_Code_2015.pdf> and <https://www.smufl.org/>
+
+# sign Glyph name	Braille
+always accdnPull	126-12
+always accdnPush	126-3
+always accidentalBracketLeft	6-3
+always accidentalBracketRight	6-3
+always accidentalDoubleFlat	126-126
+always accidentalDoubleSharp	146-146
+always accidentalFlat	126
+always accidentalLargeDoubleSharp	146-146
+always accidentalNatural	16
+always accidentalParensLeft	6-3
+always accidentalParensRight	6-3
+always accidentalQuarterToneFlat4	4-126
+always accidentalQuarterToneFlatArrowUp	4-126
+always accidentalQuarterToneFlatNaturalArrowDown	4-126
+always accidentalQuarterToneFlatPenderecki	4-126
+always accidentalQuarterToneFlatStein	4-126
+always accidentalQuarterToneFlatVanBlankenburg	4-126
+always accidentalQuarterToneSharp4	4-146
+always accidentalQuarterToneSharpArrowDown	4-146
+always accidentalQuarterToneSharpBusotti	4-146
+always accidentalQuarterToneSharpNaturalArrowUp	4-146
+always accidentalQuarterToneSharpStein	4-146
+always accidentalQuarterToneSharpWiggle	4-146
+always accidentalSharp	146
+always accidentalSharpSharp	146-146
+always accidentalThreeQuarterTonesFlatArrowDown	456-126
+always accidentalThreeQuarterTonesFlatArrowUp	456-126
+always accidentalThreeQuarterTonesFlatCouper	456-126
+always accidentalThreeQuarterTonesFlatGrisey	456-126
+always accidentalThreeQuarterTonesFlatTartini	456-126
+always accidentalThreeQuarterTonesFlatZimmermann	456-126
+always accidentalThreeQuarterTonesSharpArrowDown	456-146
+always accidentalThreeQuarterTonesSharpArrowUp	456-146
+always accidentalThreeQuarterTonesSharpBusotti	456-146
+always accidentalThreeQuarterTonesSharpStein	456-146
+always accidentalThreeQuarterTonesSharpStockhausen	456-146
+always accidentalTripleFlat	126-126-126
+always accidentalTripleSharp	146-146-146
+always analyticsChoralmelodie	345-14-125-3
+always analyticsEndStimme	5-23
+always analyticsHauptrhythmus	345-125-1235-3
+always analyticsHauptstimme	345-125-3
+always analyticsInversion1	345-24-3
+always analyticsNebenstimme	345-1345-3
+always analyticsStartStimme	56-2
+always analyticsTheme	345-2345-3
+always analyticsTheme1	345-2345-2-3
+always analyticsThemeInversion	345-2345-24-3
+always analyticsThemeRetrograde	345-2345-1235-3
+always analyticsThemeRetrogradeInversion	345-2345-1235-24-3
+always arpeggiatoDown	345-13-13
+always arpeggiatoUp	345-13
+always articAccentAbove	46-236
+always articAccentBelow	46-236
+always articAccentStaccatoAbove	236-46-236
+always articAccentStaccatoBelow	236-46-236
+always articLaissezVibrerAbove	56-14
+always articLaissezVibrerBelow	56-14
+always articMarcatoAbove	56-236
+always articMarcatoBelow	56-236
+always articMarcatoStaccatoAbove	236-56-236
+always articMarcatoStaccatoBelow	236-56-236
+always articMarcatoTenutoAbove	56-236-456-236
+always articMarcatoTenutoBelow	56-236-456-236
+always articSoftAccentAbove	34-123456-16
+always articSoftAccentBelow	34-123456-16
+always articSoftAccentStaccatoAbove	34-123456-16
+always articSoftAccentStaccatoBelow	34-123456-16
+always articSoftAccentTenutoAbove	34-123456-16
+always articSoftAccentTenutoBelow	34-123456-16
+always articSoftAccentTenutoStaccatoAbove	34-123456-16
+always articSoftAccentTenutoStaccatoBelow	34-123456-16
+always articStaccatissimoAbove	6-236
+always articStaccatissimoBelow	6-236
+always articStaccatissimoStrokeAbove	34-123456-16
+always articStaccatissimoStrokeBelow	34-123456-16
+always articStaccatissimoWedgeAbove	6-236-4-236
+always articStaccatissimoWedgeBelow	6-236-4-236
+always articStaccatoAbove	236
+always articStaccatoBelow	236
+always articStressAbove	34-123456-16
+always articStressBelow	34-123456-16
+always articTenutoAbove	456-236
+always articTenutoAccentAbove	46-236-456-236
+always articTenutoAccentBelow	46-236-456-236
+always articTenutoBelow	456-236
+always articTenutoStaccatoAbove	5-236
+always articTenutoStaccatoBelow	5-236
+always articUnstressAbove	34-123456-16
+always articUnstressBelow	34-123456-16
+always barlineDashed	0-13-0
+always barlineDotted	0-13-0
+always barlineDouble	126-13-3
+always barlineFinal	126-13
+always barlineHeavy	123
+always barlineHeavyHeavy	34-123456-16
+always barlineReverseFinal	34-123456-16
+always barlineShort	0
+always barlineSingle	0
+always barlineTick	0
+always breathMarkComma	345-2
+always breathMarkSalzedo	345-2
+always breathMarkTick	345-2
+always breathMarkUpbow	345-2
+always buzzRoll	45-2
+always cClef	345-346-123
+always cClef8vb	345-346-123-3456-236
+always caesura	6-34
+always caesuraCurved	6-34
+always caesuraShort	6-34
+always caesuraThick	6-34
+always clef15	3456-1-15 for above- 3456-2-26 for below
+always clef8	3456-125 for above- 3456-236 for below
+#always coda	346-123
+always codaSquare	346-123
+always csymAccidentalDoubleFlat	126-126
+always csymAccidentalDoubleSharp	146-146
+always csymAccidentalFlat	126
+always csymAccidentalNatural	16
+always csymAccidentalSharp	146
+always csymAccidentalTripleFlat	126-126-126
+always csymAccidentalTripleSharp	146-146-146
+always csymAugmented	346
+always csymBracketLeftTall	56-3
+always csymBracketRightTall	6-23
+always csymDiagonalArrangementSlash	3456-34
+always csymDiminished	256
+always csymHalfDiminished	256-3
+always csymMajorSeventh	6-134-3456-1245
+always csymMinor	134
+always csymParensLeftTall	2356
+always csymParensLeftVeryTall	2356
+always csymParensRightTall	2356
+always csymParensRightVeryTall	2356
+always daCapo	345-145-3-14-3
+always dalSegno	345-145-3-234-3
+always dynamicCombinedSeparatorColon	25
+always dynamicCombinedSeparatorHyphen	36
+always dynamicCombinedSeparatorSlash	34
+always dynamicCombinedSeparatorSpace	0
+always dynamicCrescendoHairpin	14
+always dynamicDiminuendoHairpin	145
+always dynamicFF	124-124
+always dynamicFFF	124-124-124
+always dynamicFFFF	124-124-124-124
+always dynamicFFFFF	124-124-124-124-124
+always dynamicFFFFFF	124-124-124-124-124-124
+always dynamicForte	124
+always dynamicFortePiano	124-1234
+always dynamicForzando	124-1356
+always dynamicHairpinBracketLeft	56-3
+always dynamicHairpinBracketRight	6-23
+always dynamicHairpinParenthesisLeft	6-3
+always dynamicHairpinParenthesisRight	6-3
+always dynamicMF	134-124
+always dynamicMP	134-1234
+always dynamicMessaDiVoce	16-3
+always dynamicMezzo	134
+always dynamicNiente	1345
+always dynamicPF	1234-124
+always dynamicPP	1234-1234
+always dynamicPPP	1234-1234-1234
+always dynamicPPPP	1234-1234-1234-1234
+always dynamicPPPPP	1234-1234-1234-1234-1234
+always dynamicPPPPPP	1234-1234-1234-1234-1234-1234
+always dynamicPiano	1234
+always dynamicRinforzando	1235
+always dynamicRinforzando1	1235-124
+always dynamicRinforzando2	1235-124-1356
+always dynamicSforzando	234
+always dynamicSforzando1	234-124
+always dynamicSforzandoPianissimo	234-124-1234-1234
+always dynamicSforzandoPiano	234-124-1234
+always dynamicSforzato	234-124-1356
+always dynamicSforzatoFF	234-124-124-1356
+always dynamicSforzatoPiano	234-124-1356-1234
+always dynamicZ	1356
+always fClef	345-3456-123
+always fClef15ma	345-3456-123-3456-1-15
+always fClef15mb	345-3456-123-3456-2-26
+always fClef8va	345-3456-123-3456-125
+always fClef8vb	345-3456-123-3456-236
+always fermataAbove	126-123
+always fermataBelow	126-123
+always fermataLongAbove	45-126-123
+always fermataLongBelow	45-126-123
+always fermataShortAbove	34-123456-16
+always fermataShortBelow	34-123456-16
+always fermataVeryLongAbove	45-126-123
+always fermataVeryLongBelow	45-126-123
+always fermataVeryShortAbove	34-123456-16
+always fermataVeryShortBelow	34-123456-16
+always fingering0	13
+always fingering0Italic	13
+always fingering1	1
+always fingering1Italic	1
+always fingering2	12
+always fingering2Italic	12
+always fingering3	123
+always fingering3Italic	123
+always fingering4	2
+always fingering4Italic	2
+always fingering5	13
+always fingering5Italic	13
+always fingering6	34-123456-16
+always fingering6Italic	34-123456-16
+always fingering7	34-123456-16
+always fingering7Italic	34-123456-16
+always fingering8	34-123456-16
+always fingering8Italic	34-123456-16
+always fingering9	34-123456-16
+always fingering9Italic	34-123456-16
+always fingeringALower	1
+always fingeringCLower	13
+always fingeringELower	15
+always fingeringILower	24
+always fingeringLeftBracket	56-3
+always fingeringLeftBracketItalic	56-3
+always fingeringLeftParenthesis	6-3
+always fingeringLeftParenthesisItalic	6-3
+always fingeringMLower	134
+always fingeringMultipleNotes	34-123456-16
+always fingeringOLower	135
+always fingeringPLower	1234
+always fingeringRightBracket	6-23
+always fingeringRightBracketItalic	6-23
+always fingeringRightParenthesis	6-3
+always fingeringRightParenthesisItalic	6-3
+always fingeringSeparatorMiddleDot	34-123456-16
+always fingeringSeparatorMiddleDotWhite	34-123456-16
+always fingeringSeparatorSlash	34-123456-16
+always fingeringSubstitutionAbove	34-123456-16
+always fingeringSubstitutionBelow	34-123456-16
+always fingeringSubstitutionDash	14
+always fingeringTLower	2345
+always fingeringTUpper	2345
+always fingeringXLower	1346
+always gClef	345-34-123
+always gClef15ma	345-34-123-3456-1-15
+always gClef15mb	345-34-123-3456-2-26
+always gClef8va	345-34-123-3456-125
+always gClef8vb	345-34-123-3456-236
+always gClef8vbCClef	345-34-123-3456-236-345-346-123
+always gClef8vbOld	345-34-123-3456-236
+always gClef8vbParens	345-34-123-6-3-3456-236-6-3
+always keyboardBebung2DotsAbove	4-236-236
+always keyboardBebung2DotsBelow	4-236-236
+always keyboardBebung3DotsAbove	4-236-236-236
+always keyboardBebung3DotsBelow	4-236-236-236
+always keyboardBebung4DotsAbove	4-236-236-236-236
+always keyboardBebung4DotsBelow	4-236-236-236-236
+always keyboardPedalPed	126-14
+always keyboardPedalUp	16-14
+always ornamentMordent	5-235
+always ornamentSchleifer	4-123
+always ornamentTrill	235
+always ornamentTurn	256
+always ornamentTurnInverted	256-123
+always repeat1Bar	2356
+always repeat2Bars	3456-12
+always repeat4Bars	3456-145
+always repeatLeft	126-2356
+always repeatRight	126-23
+always repeatRightLeft	126-23-0-126-2356
+always rightRepeatSmall	126-23
+#always segno	346
+always stringsDownBow	126-12
+always stringsThumbPosition	16-13
+always stringsUpBow	126-3
+always timeSigBracketLeft	6-2356
+always timeSigBracketLeftSmall	6-2356
+always timeSigBracketRight	2356-3
+always timeSigBracketRightSmall	2356-3
+always timeSigCommon	46-14
+always timeSigCut2	456-14
+always timeSigCutCommon	456-14
+always timeSigEquals	123456
+always timeSigFractionHalf	3456-1-34-12
+always timeSigFractionOneThird	3456-1-34-14
+always timeSigFractionQuarter	3456-1-34-145
+always timeSigFractionThreeQuarters	3456-14-34-145
+always timeSigFractionTwoThirds	3456-12-34-14
+always timeSigFractionalSlash	34
+always timeSigMinus	36
+always timeSigMultiply	16
+always timeSigParensLeft	2356
+always timeSigParensLeftSmall	2356
+always timeSigParensRight	2356
+always timeSigParensRightSmall	2356
+always timeSigPlus	346
+always timeSigPlusSmall	346
+always timeSigSlash	34
+always unmeasuredTremolo	45-2
+always unmeasuredTremoloSimple	45-2
+always harpPedalRaised	12
+always harpPedalCentered	2
+always harpPedalLowered	23
+always harpPedalDivider	123
+always metNote128thDown	145
+always metNote128thUp	145
+always metNote256thDown	13456
+always metNote256thUp	13456
+always metNote64thDown	1456
+always metNote64thUp	1456
+always metNote32ndDown	1345
+always metNote32ndUp	1345
+always metNote16thDown	13456
+always metNote16thUp	13456
+always metNote8thDown	145
+always metNote8thUp	145
+always metNoteQuarterDown	1456
+always metNoteQuarterUp	1456
+always metNoteHalfDown	1345
+always metNoteHalfUp	1345
+always metNoteWhole	13456
+always metNoteDoubleWhole	13456-45-14-13456
+always metNoteTie	4-14
+always metDashNoteTie	4-14
+always Note256thDown	13456
+always Note256thUp	13456
+always Note128thDown	145
+always Note128thUp	145
+always Note64thDown	1456
+always Note64thUp	1456
+always Note32ndDown	1345
+always Note32ndUp	1345
+always Note16thDown	13456
+always Note16thUp	13456
+always Note8thDown	145
+always Note8thUp	145
+always NoteQuarterDown	1456
+always NoteQuarterUp	1456
+always NoteHalfDown	1345
+always NoteHalfUp	1345
+always NoteWhole	13456
+always NoteDoubleWhole	13456-45-14-13456
+always noteDoubleWholeSquare	13456-45-14-13456
+always figbassDoubleFlat	126-126
+always figbassDoubleSharp	146-146
+always figbassFlat	126
+always figbassNatural	16
+always figbassSharp	146
