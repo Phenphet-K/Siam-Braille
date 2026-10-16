@@ -635,6 +635,248 @@
       color: var(--text-muted);
       font-size: 13px;
     }
+
+    /* =========================================================
+       Mobile & Tablet Responsive System (UX Optimization)
+       ========================================================= */
+    @media (max-width: 992px) {
+      .container {
+        padding: 0 20px;
+      }
+
+      .hero {
+        padding: 60px 0 40px;
+      }
+
+      .hero-title {
+        font-size: 38px;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .pricing-card.popular {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      /* Navbar Mobile */
+      .navbar {
+        padding: 14px 0;
+      }
+
+      .navbar .container {
+        flex-direction: column;
+        gap: 14px;
+        align-items: stretch !important;
+      }
+
+      .brand-logo {
+        justify-content: center;
+      }
+
+      .brand-name {
+        font-size: 20px;
+      }
+
+      .nav-links {
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+      }
+
+      .nav-links li:last-child {
+        width: 100%;
+        text-align: center;
+        margin-top: 4px;
+      }
+
+      .nav-links li:last-child a {
+        display: block;
+        width: 100%;
+        padding: 10px 16px;
+      }
+
+      /* Hero Mobile */
+      .hero {
+        padding: 40px 0 30px;
+      }
+
+      .hero-badge {
+        font-size: 11px;
+        padding: 6px 12px;
+        line-height: 1.4;
+      }
+
+      .hero-title {
+        font-size: 28px;
+        line-height: 1.3;
+      }
+
+      .hero-subtitle {
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 28px;
+      }
+
+      .hero-cta {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 36px;
+      }
+
+      .btn-primary, .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 20px;
+        font-size: 15px;
+      }
+
+      /* Live Demo Mobile */
+      .demo-card {
+        padding: 18px 14px;
+        border-radius: 16px;
+      }
+
+      .demo-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .demo-title {
+        font-size: 14px;
+      }
+
+      .demo-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .input-box, .braille-output-box {
+        height: 120px;
+        font-size: 14px;
+      }
+
+      .braille-output-box {
+        font-size: 18px;
+        letter-spacing: 1.5px;
+      }
+
+      /* Features Mobile */
+      .features-section, .pricing-section {
+        padding: 50px 0;
+      }
+
+      .section-header {
+        margin-bottom: 36px;
+      }
+
+      .section-title {
+        font-size: 24px;
+      }
+
+      .section-sub {
+        font-size: 14px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .feature-card {
+        padding: 20px 18px;
+      }
+
+      /* Pricing Mobile */
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .pricing-card {
+        padding: 28px 20px;
+      }
+
+      .popular-tag {
+        top: -12px;
+        right: 18px;
+        font-size: 11px;
+        padding: 3px 10px;
+      }
+
+      .plan-price {
+        font-size: 34px;
+      }
+
+      /* Modal Mobile */
+      .modal-backdrop {
+        padding: 10px;
+        align-items: flex-end;
+      }
+
+      .checkout-modal {
+        padding: 22px 18px;
+        border-radius: 20px 20px 10px 10px;
+        max-height: 92vh;
+      }
+
+      .modal-head h3 {
+        font-size: 17px !important;
+      }
+
+      .promptpay-box {
+        padding: 16px 12px;
+        margin: 14px 0;
+      }
+
+      .qr-container {
+        width: 180px;
+        height: 180px;
+      }
+
+      .amount-display {
+        font-size: 24px;
+      }
+
+      .key-reveal-box {
+        font-size: 16px;
+        padding: 12px;
+        word-break: break-all;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .hero-title {
+        font-size: 24px;
+      }
+
+      .brand-name {
+        font-size: 18px;
+      }
+
+      .qr-container {
+        width: 160px;
+        height: 160px;
+      }
+    }
   </style>
 </head>
 

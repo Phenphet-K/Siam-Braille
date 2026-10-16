@@ -374,6 +374,93 @@
       grid-template-columns: 1fr 1fr;
       gap: 14px;
     }
+
+    /* Table Responsive Wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile & Tablet Responsive System for Admin Portal */
+    @media (max-width: 900px) {
+      body {
+        padding: 16px 14px;
+      }
+
+      .top-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 18px;
+        margin-bottom: 20px;
+      }
+
+      .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .header-actions button,
+      .header-actions div {
+        flex-grow: 1;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        padding: 16px 18px;
+      }
+
+      .stat-val {
+        font-size: 26px;
+      }
+
+      .table-container {
+        padding: 16px;
+      }
+
+      .table-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input {
+        width: 100%;
+        min-width: unset;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-title {
+        font-size: 20px;
+      }
+
+      .brand-sub {
+        font-size: 12px;
+      }
+
+      .modal-card {
+        padding: 20px 16px;
+        width: 95%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -468,9 +555,8 @@
           <span id="license-count" style="font-size: 13px; color: var(--text-muted);">(0 รายการ)</span>
         </div>
         <input type="text" id="searchInput" class="search-input" placeholder="🔍 ค้นหาด้วยรหัสคีย์, ชื่อเจ้าของ, หน่วยงาน..." oninput="filterLicenses()">
-      </div>
-
-      <table>
+      <div class="table-responsive">
+        <table>
         <thead>
           <tr>
             <th>รหัสคีย์ (License Key)</th>
@@ -525,21 +611,23 @@
         <button class="btn-secondary" onclick="loadOrders()">🔄 รีเฟรชรายการสั่งซื้อ</button>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>เวลาที่ทำรายการ</th>
-            <th>ลูกค้า / อีเมล / โทร</th>
-            <th>แพ็กเกจ</th>
-            <th>ยอดเงิน</th>
-            <th>ธนาคาร & เลขอ้างอิงสลิป (TransRef)</th>
-            <th>รหัสคีย์ที่ออกให้</th>
-          </tr>
-        </thead>
-        <tbody id="ordersTableBody">
-          <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">กำลังโหลดประวัติคำสั่งซื้อ...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>เวลาที่ทำรายการ</th>
+              <th>ลูกค้า / อีเมล / โทร</th>
+              <th>แพ็กเกจ</th>
+              <th>ยอดเงิน</th>
+              <th>ธนาคาร & เลขอ้างอิงสลิป (TransRef)</th>
+              <th>รหัสคีย์ที่ออกให้</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">กำลังโหลดประวัติคำสั่งซื้อ...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
