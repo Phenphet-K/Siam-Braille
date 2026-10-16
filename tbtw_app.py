@@ -1675,11 +1675,14 @@ class TBTWMainWindow(QMainWindow):
             if fid != -1:
                 self.simbrl_font_loaded = True
                 
+        # Current UI Language: 'th' (Thai) or 'en' (English)
+        self.current_lang = "th"
+        
         # 2. Window Setup & Accessibility
         self.update_title()
         self.resize(1200, 750)
         self.setMinimumSize(640, 400)
-        self.setAccessibleName("TBT for windows Version 3.00 โปรแกรมแปลเอกสารเป็นอักษรเบรลล์")
+        self.setAccessibleName("SiamBraille 1.0 โปรแกรมแปลเอกสารเป็นอักษรเบรลล์")
         self.setAccessibleDescription(
             "หน้าต่างหลักของโปรแกรม มีกล่องข้อความภาษาไทยปกติทางซ้าย และกล่องอักษรเบรลล์ทางขวา "
             "กด F6 เพื่อสลับระหว่างสองกล่องข้อความ กด Ctrl+T เพื่อแปลเป็นอักษรเบรลล์"
@@ -1693,14 +1696,13 @@ class TBTWMainWindow(QMainWindow):
         self.setup_menubar()
         self.setup_toolbar()
         self.setup_statusbar()
+        self.retranslate_ui()
         
     def update_title(self):
         mgr = license_guard.global_license_manager
-        if mgr.is_licensed:
-            owner = mgr.license_info.get("owner", "Active")
-            lic_tag = f" [Pro Lifetime — {owner}]"
-        else:
-            lic_tag = " [ทดลองใช้ 14 วัน]"
+        lic_tag = ""
+        if not mgr.is_licensed:
+            lic_tag = " [ทดลองใช้]" if getattr(self, "current_lang", "th") == "th" else " [Trial]"
         self.setWindowTitle(f"SiamBraille 1.0{lic_tag} - ({self.current_filename})")
 
     def setup_ui(self):
@@ -1853,14 +1855,15 @@ class TBTWMainWindow(QMainWindow):
     def eventFilter(self, watched, event):
         """ตรวจจับ focus เปลี่ยนระหว่างกล่องข้อความซ้าย/ขวา เพื่ออัปเดตแถบสถานะและแจ้ง Screen Reader ชัดเจน"""
         if event.type() == QEvent.Type.FocusIn:
+            is_th = getattr(self, 'current_lang', 'th') == 'th'
             if watched == self.txt_normal:
                 if hasattr(self, 'lbl_report') and self.lbl_report is not None:
-                    self.lbl_report.setText("ข้อมูลเดิม(Normal Font)")
-                self.set_status_message("เข้าสู่กล่องข้อความข้อมูลเดิม (Normal Font) - พิมพ์ข้อความภาษาไทยที่นี่")
+                    self.lbl_report.setText("ข้อมูลเดิม" if is_th else "Original Text")
+                self.set_status_message("เข้าสู่กล่องข้อความข้อมูลเดิม (ภาษาไทยปกติ)" if is_th else "Focus in Original Text box")
             elif watched == self.txt_braille:
                 if hasattr(self, 'lbl_report') and self.lbl_report is not None:
-                    self.lbl_report.setText("ข้อมูลแปล(Braille Font)")
-                self.set_status_message("เข้าสู่กล่องข้อความข้อมูลแปล (Braille Font) - แสดงผลอักษรเบรลล์")
+                    self.lbl_report.setText("ข้อมูลไฟล์ที่แปลแล้ว" if is_th else "Translated File")
+                self.set_status_message("เข้าสู่กล่องข้อความอักษรเบรลล์" if is_th else "Focus in Braille Output box")
         return super().eventFilter(watched, event)
 
     def setup_menubar(self):
@@ -1901,202 +1904,180 @@ class TBTWMainWindow(QMainWindow):
         # ---------------------------------------------------------
         # 1. File Menu (Alt+F)
         # ---------------------------------------------------------
-        menu_file = menubar.addMenu("&File")
-        if menu_file:
-            menu_file.setStatusTip("เมนูไฟล์ (Alt+F)")
+        self.menu_file = menubar.addMenu("&File")
+        if self.menu_file:
+            self.menu_file.setStatusTip("เมนูไฟล์ (Alt+F)")
             
-            act_new = QAction("&New\tCtrl+N", self)
-            act_new.setIcon(get_app_icon("ui_icon_new.png"))
-            act_new.setShortcut(QKeySequence("Ctrl+N"))
-            act_new.setStatusTip("เปิดไฟล์ใหม่ New")
-            act_new.setWhatsThis("ล้างข้อมูลปัจจุบันและเปิดเอกสารใหม่ คีย์ลัด Ctrl+N")
-            act_new.setStatusTip("เปิดไฟล์ใหม่ (Ctrl+N)")
-            act_new.triggered.connect(self.file_new)
-            menu_file.addAction(act_new)
+            self.act_new = QAction("&New\tCtrl+N", self)
+            self.act_new.setIcon(get_app_icon("ui_icon_new.png"))
+            self.act_new.setShortcut(QKeySequence("Ctrl+N"))
+            self.act_new.setStatusTip("เปิดไฟล์ใหม่ (Ctrl+N)")
+            self.act_new.setWhatsThis("ล้างข้อมูลปัจจุบันและเปิดเอกสารใหม่ คีย์ลัด Ctrl+N")
+            self.act_new.triggered.connect(self.file_new)
+            self.menu_file.addAction(self.act_new)
             
-            act_open = QAction("&Open...\tCtrl+O", self)
-            act_open.setIcon(get_app_icon("ui_icon_open.png"))
-            act_open.setShortcut(QKeySequence("Ctrl+O"))
-            act_open.setStatusTip("เปิดไฟล์เดิม Open")
-            act_open.setWhatsThis("เลือกและเปิดไฟล์ข้อความที่มีอยู่แล้ว คีย์ลัด Ctrl+O")
-            act_open.setStatusTip("เปิดไฟล์เก่า (Ctrl+O)")
-            act_open.triggered.connect(self.file_open)
-            menu_file.addAction(act_open)
+            self.act_open = QAction("&Open...\tCtrl+O", self)
+            self.act_open.setIcon(get_app_icon("ui_icon_open.png"))
+            self.act_open.setShortcut(QKeySequence("Ctrl+O"))
+            self.act_open.setStatusTip("เปิดไฟล์เก่า (Ctrl+O)")
+            self.act_open.setWhatsThis("เลือกและเปิดไฟล์ข้อความที่มีอยู่แล้ว คีย์ลัด Ctrl+O")
+            self.act_open.triggered.connect(self.file_open)
+            self.menu_file.addAction(self.act_open)
             
-            act_translate = QAction("&Translate\tCtrl+T", self)
-            act_translate.setIcon(get_app_icon("glyph_translate.png"))
-            act_translate.setShortcut(QKeySequence("Ctrl+T"))
-            act_translate.setStatusTip("แปลเอกสารเป็นอักษรเบรลล์ Translate")
-            act_translate.setWhatsThis("แปลข้อความภาษาไทยในกล่องซ้ายเป็นอักษรเบรลล์ในกล่องขวา คีย์ลัด Ctrl+T")
-            act_translate.setStatusTip("แปลเป็นเบรลล์ (Ctrl+T)")
-            act_translate.triggered.connect(self.action_translate)
-            menu_file.addAction(act_translate)
+            self.act_translate = QAction("&Translate\tCtrl+T", self)
+            self.act_translate.setIcon(get_app_icon("glyph_translate.png"))
+            self.act_translate.setShortcut(QKeySequence("Ctrl+T"))
+            self.act_translate.setStatusTip("แปลเป็นเบรลล์ (Ctrl+T)")
+            self.act_translate.setWhatsThis("แปลข้อความภาษาไทยในกล่องซ้ายเป็นอักษรเบรลล์ในกล่องขวา คีย์ลัด Ctrl+T")
+            self.act_translate.triggered.connect(self.action_translate)
+            self.menu_file.addAction(self.act_translate)
             
             # Print Submenu
-            menu_print = menu_file.addMenu("&Print")
-            if menu_print:
-                menu_print.setStatusTip("ส่งไปเครื่องพิมพ์ปกติ")
+            self.menu_print = self.menu_file.addMenu("&Print")
+            if self.menu_print:
+                self.menu_print.setStatusTip("ส่งไปเครื่องพิมพ์ปกติ")
                 
-                act_print_reg = QAction("&Regular text", self)
-                act_print_reg.setStatusTip("พิมพ์อักษรปกติ Regular text")
-                act_print_reg.setStatusTip("พิมพ์อักษรปกติ")
-                act_print_reg.triggered.connect(self.print_regular)
-                menu_print.addAction(act_print_reg)
+                self.act_print_reg = QAction("&Regular text", self)
+                self.act_print_reg.setStatusTip("พิมพ์อักษรปกติ")
+                self.act_print_reg.triggered.connect(self.print_regular)
+                self.menu_print.addAction(self.act_print_reg)
                 
-                act_print_dots = QAction("&Braille dots", self)
-                act_print_dots.setStatusTip("พิมพ์เป็นจุดเบรลล์ Braille dots")
-                act_print_dots.setStatusTip("พิมพ์เป็นจุดเบรลล์")
-                act_print_dots.triggered.connect(self.print_dots)
-                menu_print.addAction(act_print_dots)
+                self.act_print_dots = QAction("&Braille dots", self)
+                self.act_print_dots.setStatusTip("พิมพ์เป็นจุดเบรลล์")
+                self.act_print_dots.triggered.connect(self.print_dots)
+                self.menu_print.addAction(self.act_print_dots)
             
-            act_braille_print = QAction("&Braille...\tCtrl+B", self)
-            act_braille_print.setShortcut(QKeySequence("Ctrl+B"))
-            act_braille_print.setStatusTip("ส่งออกไฟล์เครื่องพิมพ์เบรลล์ Braille Export")
-            act_braille_print.setWhatsThis("บันทึกไฟล์เป็นนามสกุล .BRF สำหรับนำไปปั๊มลงเครื่องพิมพ์เบรลล์ คีย์ลัด Ctrl+B")
-            act_braille_print.setStatusTip("ส่งไปเครื่องพิมพ์เบรลล์ (Ctrl+B)")
-            act_braille_print.triggered.connect(self.action_print_braille)
-            menu_file.addAction(act_braille_print)
+            self.act_braille_print = QAction("&Braille...\tCtrl+B", self)
+            self.act_braille_print.setShortcut(QKeySequence("Ctrl+B"))
+            self.act_braille_print.setStatusTip("ส่งไปเครื่องพิมพ์เบรลล์ (Ctrl+B)")
+            self.act_braille_print.setWhatsThis("บันทึกไฟล์เป็นนามสกุล .BRF สำหรับนำไปปั๊มลงเครื่องพิมพ์เบรลล์ คีย์ลัด Ctrl+B")
+            self.act_braille_print.triggered.connect(self.action_print_braille)
+            self.menu_file.addAction(self.act_braille_print)
             
-            menu_file.addSeparator()
+            self.menu_file.addSeparator()
             
-            act_print_setup = QAction("Print &Setup...\tCtrl+P", self)
-            act_print_setup.setShortcut(QKeySequence("Ctrl+P"))
-            act_print_setup.setStatusTip("ตั้งค่าหน้ากระดาษเบรลล์ Print Setup")
-            act_print_setup.setWhatsThis("กำหนดจำนวนเซลล์ต่อบรรทัดและจำนวนบรรทัดต่อหน้า คีย์ลัด Ctrl+P")
-            act_print_setup.setStatusTip("ตั้งค่าเครื่องพิมพ์ (Ctrl+P)")
-            act_print_setup.triggered.connect(self.open_page_setting)
-            menu_file.addAction(act_print_setup)
+            self.act_print_setup = QAction("Print &Setup...\tCtrl+P", self)
+            self.act_print_setup.setShortcut(QKeySequence("Ctrl+P"))
+            self.act_print_setup.setStatusTip("ตั้งค่าหน้ากระดาษและเครื่องพิมพ์ (Ctrl+P)")
+            self.act_print_setup.setWhatsThis("กำหนดจำนวนเซลล์ต่อบรรทัดและจำนวนบรรทัดต่อหน้า คีย์ลัด Ctrl+P")
+            self.act_print_setup.triggered.connect(self.open_page_setting)
+            self.menu_file.addAction(self.act_print_setup)
             
-            act_save = QAction("&Save\tCtrl+S", self)
-            act_save.setIcon(get_app_icon("ui_icon_save.png"))
-            act_save.setShortcut(QKeySequence("Ctrl+S"))
-            act_save.setStatusTip("บันทึกไฟล์ Save")
-            act_save.setWhatsThis("บันทึกเอกสารปัจจุบัน คีย์ลัด Ctrl+S")
-            act_save.setStatusTip("บันทึก (Ctrl+S)")
-            act_save.triggered.connect(self.file_save)
-            menu_file.addAction(act_save)
+            self.act_save = QAction("&Save\tCtrl+S", self)
+            self.act_save.setIcon(get_app_icon("ui_icon_save.png"))
+            self.act_save.setShortcut(QKeySequence("Ctrl+S"))
+            self.act_save.setStatusTip("บันทึก (Ctrl+S)")
+            self.act_save.setWhatsThis("บันทึกเอกสารปัจจุบัน คีย์ลัด Ctrl+S")
+            self.act_save.triggered.connect(self.file_save)
+            self.menu_file.addAction(self.act_save)
             
-            act_save_as = QAction("Save &As...", self)
-            act_save_as.setStatusTip("บันทึกเป็น Save As")
-            act_save_as.setWhatsThis("บันทึกเอกสารเป็นไฟล์ใหม่ด้วยชื่อหรือตำแหน่งอื่น")
-            act_save_as.setStatusTip("บันทึกเป็น")
-            act_save_as.triggered.connect(self.file_save_as)
-            menu_file.addAction(act_save_as)
+            self.act_save_as = QAction("Save &As...", self)
+            self.act_save_as.setStatusTip("บันทึกเป็นไฟล์ใหม่")
+            self.act_save_as.setWhatsThis("บันทึกเอกสารเป็นไฟล์ใหม่ด้วยชื่อหรือตำแหน่งอื่น")
+            self.act_save_as.triggered.connect(self.file_save_as)
+            self.menu_file.addAction(self.act_save_as)
             
-            act_save_all = QAction("Save Al&l\tCtrl+A", self)
-            act_save_all.setStatusTip("บันทึกไฟล์ทั้งหมด Save All")
-            act_save_all.setStatusTip("บันทึกไฟล์ทั้งหมด (Ctrl+A)")
-            act_save_all.triggered.connect(self.file_save)
-            menu_file.addAction(act_save_all)
+            self.act_save_all = QAction("Save Al&l\tCtrl+A", self)
+            self.act_save_all.setStatusTip("บันทึกไฟล์ทั้งหมด (Ctrl+A)")
+            self.act_save_all.triggered.connect(self.file_save)
+            self.menu_file.addAction(self.act_save_all)
             
-            menu_file.addSeparator()
+            self.menu_file.addSeparator()
             
-            act_exit = QAction("E&xit\tAlt+F4", self)
-            act_exit.setStatusTip("ออกจากโปรแกรม Exit")
-            act_exit.setStatusTip("ออกจากโปรแกรม")
-            act_exit.triggered.connect(self.close)
-            menu_file.addAction(act_exit)
+            self.act_exit = QAction("E&xit\tAlt+F4", self)
+            self.act_exit.setStatusTip("ออกจากโปรแกรม")
+            self.act_exit.triggered.connect(self.close)
+            self.menu_file.addAction(self.act_exit)
 
         # ---------------------------------------------------------
         # 2. Edit Menu (Alt+E)
         # ---------------------------------------------------------
-        menu_edit = menubar.addMenu("&Edit")
-        if menu_edit:
-            menu_edit.setStatusTip("เมนูแก้ไข (Alt+E)")
+        self.menu_edit = menubar.addMenu("&Edit")
+        if self.menu_edit:
+            self.menu_edit.setStatusTip("เมนูแก้ไข (Alt+E)")
             
-            act_cut = QAction("Cu&t\tCtrl+X", self)
-            act_cut.setIcon(get_app_icon("ui_icon_cut.png"))
-            act_cut.setShortcut(QKeySequence("Ctrl+X"))
-            act_cut.setStatusTip("ตัดข้อความ Cut")
-            act_cut.setWhatsThis("ตัดข้อความที่เลือกไปยังคลิปบอร์ด คีย์ลัด Ctrl+X")
-            act_cut.setStatusTip("ตัดข้อความ (Ctrl+X)")
-            act_cut.triggered.connect(self.txt_normal.cut)
-            menu_edit.addAction(act_cut)
+            self.act_cut = QAction("Cu&t\tCtrl+X", self)
+            self.act_cut.setIcon(get_app_icon("ui_icon_cut.png"))
+            self.act_cut.setShortcut(QKeySequence("Ctrl+X"))
+            self.act_cut.setStatusTip("ตัดข้อความ (Ctrl+X)")
+            self.act_cut.setWhatsThis("ตัดข้อความที่เลือกไปยังคลิปบอร์ด คีย์ลัด Ctrl+X")
+            self.act_cut.triggered.connect(self.txt_normal.cut)
+            self.menu_edit.addAction(self.act_cut)
             
-            act_copy = QAction("&Copy\tCtrl+C", self)
-            act_copy.setIcon(get_app_icon("ui_icon_copy.png"))
-            act_copy.setShortcut(QKeySequence("Ctrl+C"))
-            act_copy.setStatusTip("คัดลอกข้อความ Copy")
-            act_copy.setWhatsThis("คัดลอกข้อความที่เลือกไปยังคลิปบอร์ด คีย์ลัด Ctrl+C")
-            act_copy.setStatusTip("คัดลอกข้อความ (Ctrl+C)")
-            act_copy.triggered.connect(self.txt_normal.copy)
-            menu_edit.addAction(act_copy)
+            self.act_copy = QAction("&Copy\tCtrl+C", self)
+            self.act_copy.setIcon(get_app_icon("ui_icon_copy.png"))
+            self.act_copy.setShortcut(QKeySequence("Ctrl+C"))
+            self.act_copy.setStatusTip("คัดลอกข้อความ (Ctrl+C)")
+            self.act_copy.setWhatsThis("คัดลอกข้อความที่เลือกไปยังคลิปบอร์ด คีย์ลัด Ctrl+C")
+            self.act_copy.triggered.connect(self.txt_normal.copy)
+            self.menu_edit.addAction(self.act_copy)
             
-            act_paste = QAction("&Paste\tCtrl+V", self)
-            act_paste.setIcon(get_app_icon("ui_icon_paste.png"))
-            act_paste.setShortcut(QKeySequence("Ctrl+V"))
-            act_paste.setStatusTip("วางข้อความ Paste")
-            act_paste.setWhatsThis("วางข้อความจากคลิปบอร์ดลงในตำแหน่งเคอร์เซอร์ คีย์ลัด Ctrl+V")
-            act_paste.setStatusTip("วางข้อความ (Ctrl+V)")
-            act_paste.triggered.connect(self.txt_normal.paste)
-            menu_edit.addAction(act_paste)
+            self.act_paste = QAction("&Paste\tCtrl+V", self)
+            self.act_paste.setIcon(get_app_icon("ui_icon_paste.png"))
+            self.act_paste.setShortcut(QKeySequence("Ctrl+V"))
+            self.act_paste.setStatusTip("วางข้อความ (Ctrl+V)")
+            self.act_paste.setWhatsThis("วางข้อความจากคลิปบอร์ดลงในตำแหน่งเคอร์เซอร์ คีย์ลัด Ctrl+V")
+            self.act_paste.triggered.connect(self.txt_normal.paste)
+            self.menu_edit.addAction(self.act_paste)
             
-            menu_edit.addSeparator()
+            self.menu_edit.addSeparator()
             
-            act_find = QAction("&Find...\tCtrl+F", self)
-            act_find.setIcon(get_app_icon("ui_icon_find.png"))
-            act_find.setShortcut(QKeySequence("Ctrl+F"))
-            act_find.setStatusTip("ค้นหาข้อความ Find")
-            act_find.setStatusTip("ค้นหาข้อความ (Ctrl+F)")
-            act_find.triggered.connect(self.action_find)
-            menu_edit.addAction(act_find)
+            self.act_find = QAction("&Find...\tCtrl+F", self)
+            self.act_find.setIcon(get_app_icon("ui_icon_find.png"))
+            self.act_find.setShortcut(QKeySequence("Ctrl+F"))
+            self.act_find.setStatusTip("ค้นหาข้อความ (Ctrl+F)")
+            self.act_find.triggered.connect(self.action_find)
+            self.menu_edit.addAction(self.act_find)
             
-            act_replace = QAction("&Replace...\tCtrl+R", self)
-            act_replace.setIcon(get_app_icon("ui_icon_replace.png"))
-            act_replace.setShortcut(QKeySequence("Ctrl+R"))
-            act_replace.setStatusTip("ค้นหาและแทนที่ข้อความ Replace")
-            act_replace.setStatusTip("แทนที่ข้อความ (Ctrl+R)")
-            act_replace.triggered.connect(self.action_replace)
-            menu_edit.addAction(act_replace)
+            self.act_replace = QAction("&Replace...\tCtrl+R", self)
+            self.act_replace.setIcon(get_app_icon("ui_icon_replace.png"))
+            self.act_replace.setShortcut(QKeySequence("Ctrl+R"))
+            self.act_replace.setStatusTip("แทนที่ข้อความ (Ctrl+R)")
+            self.act_replace.triggered.connect(self.action_replace)
+            self.menu_edit.addAction(self.act_replace)
             
-            menu_edit.addSeparator()
+            self.menu_edit.addSeparator()
             
-            act_font = QAction("&Font...", self)
-            act_font.setStatusTip("เลือกแบบอักษรปกติ Font")
-            act_font.setStatusTip("ตั้งแบบอักษรปกติ")
-            act_font.triggered.connect(self.choose_font)
-            menu_edit.addAction(act_font)
+            self.act_font = QAction("&Font...", self)
+            self.act_font.setStatusTip("ตั้งแบบอักษรปกติ")
+            self.act_font.triggered.connect(self.choose_font)
+            self.menu_edit.addAction(self.act_font)
             
-            act_wrap = QAction("&Word Wrap", self)
-            act_wrap.setCheckable(True)
-            act_wrap.setChecked(False)
-            act_wrap.setStatusTip("ตัดคำขึ้นบรรทัดใหม่อัตโนมัติ Word Wrap")
-            act_wrap.setStatusTip("ตัดคำขึ้นบรรทัดใหม่อัตโนมัติ")
-            act_wrap.toggled.connect(self.toggle_wordwrap)
-            menu_edit.addAction(act_wrap)
+            self.act_wrap = QAction("&Word Wrap", self)
+            self.act_wrap.setCheckable(True)
+            self.act_wrap.setChecked(False)
+            self.act_wrap.setStatusTip("ตัดคำขึ้นบรรทัดใหม่อัตโนมัติ")
+            self.act_wrap.toggled.connect(self.toggle_wordwrap)
+            self.menu_edit.addAction(self.act_wrap)
             
-            act_fullscreen = QAction("Full &Screen\tF11", self)
-            act_fullscreen.setShortcut(QKeySequence("F11"))
-            act_fullscreen.setStatusTip("แสดงผลเต็มจอ Full Screen")
-            act_fullscreen.setStatusTip("แสดงผลเต็มจอ (F11)")
-            act_fullscreen.triggered.connect(self.toggle_fullscreen)
-            menu_edit.addAction(act_fullscreen)
+            self.act_fullscreen = QAction("Full &Screen\tF11", self)
+            self.act_fullscreen.setShortcut(QKeySequence("F11"))
+            self.act_fullscreen.setStatusTip("แสดงผลเต็มจอ (F11)")
+            self.act_fullscreen.triggered.connect(self.toggle_fullscreen)
+            self.menu_edit.addAction(self.act_fullscreen)
             
-            act_switch_win = QAction("Switch &Window\tF6", self)
-            act_switch_win.setShortcut(QKeySequence("F6"))
-            act_switch_win.setStatusTip("สลับหน้าต่างข้อความ Switch Window")
-            act_switch_win.setWhatsThis("กด F6 เพื่อสลับระหว่างกล่องข้อความภาษาไทยปกติ และกล่องอักษรเบรลล์")
-            act_switch_win.setStatusTip("สลับหน้าต่างข้อความ (F6)")
-            act_switch_win.triggered.connect(self.switch_window_focus)
-            menu_edit.addAction(act_switch_win)
+            self.act_switch_win = QAction("Switch &Window\tF6", self)
+            self.act_switch_win.setShortcut(QKeySequence("F6"))
+            self.act_switch_win.setStatusTip("สลับหน้าต่างข้อความ (F6)")
+            self.act_switch_win.setWhatsThis("กด F6 เพื่อสลับระหว่างกล่องข้อความภาษาไทยปกติ และกล่องอักษรเบรลล์")
+            self.act_switch_win.triggered.connect(self.switch_window_focus)
+            self.menu_edit.addAction(self.act_switch_win)
 
         # ---------------------------------------------------------
         # 3. Default Menu (Alt+D)
         # ---------------------------------------------------------
-        menu_default = menubar.addMenu("&Default")
-        if menu_default:
-            menu_default.setStatusTip("เมนูค่าเริ่มต้น (Alt+D)")
+        self.menu_default = menubar.addMenu("&Default")
+        if self.menu_default:
+            self.menu_default.setStatusTip("เมนูค่าเริ่มต้น (Alt+D)")
             
-            act_braille_page = QAction("&Braille Page...", self)
-            act_braille_page.setStatusTip("ตั้งค่าหน้ากระดาษเบรลล์ Braille Page Setting")
-            act_braille_page.setStatusTip("ตั้งค่าหน้ากระดาษเบรลล์")
-            act_braille_page.triggered.connect(self.open_page_setting)
-            menu_default.addAction(act_braille_page)
+            self.act_braille_page = QAction("&Braille Page...", self)
+            self.act_braille_page.setStatusTip("ตั้งค่าหน้ากระดาษเบรลล์")
+            self.act_braille_page.triggered.connect(self.open_page_setting)
+            self.menu_default.addAction(self.act_braille_page)
             
             # Page Number Location Submenu
-            menu_page_num = menu_default.addMenu("&Page Number Location")
-            if menu_page_num:
-                menu_page_num.setStatusTip("ตั้งตำแหน่งหมายเลขหน้า")
+            self.menu_page_num = self.menu_default.addMenu("&Page Number Location")
+            if self.menu_page_num:
                 self.group_page_num = QActionGroup(self)
                 self.group_page_num.setExclusive(True)
                 
@@ -2111,15 +2092,13 @@ class TBTWMainWindow(QMainWindow):
                 self.act_pn_br.setCheckable(True)
                 
                 for act, name in [(self.act_pn_tl, "Top Left"), (self.act_pn_tr, "Top Right"), (self.act_pn_bl, "Bottom Left"), (self.act_pn_br, "Bottom Right")]:
-                    act.setStatusTip("ตั้งตำแหน่งหมายเลขหน้า")
                     self.group_page_num.addAction(act)
-                    menu_page_num.addAction(act)
+                    self.menu_page_num.addAction(act)
                     act.triggered.connect(lambda ch, a=act, n=name: self.update_check_label(self.group_page_num, a, n))
                 
             # Printer Port Submenu
-            menu_printer_port = menu_default.addMenu("Printer &Port")
-            if menu_printer_port:
-                menu_printer_port.setStatusTip("เลือก Printer Port")
+            self.menu_printer_port = self.menu_default.addMenu("Printer &Port")
+            if self.menu_printer_port:
                 self.group_port = QActionGroup(self)
                 self.group_port.setExclusive(True)
                 
@@ -2134,15 +2113,13 @@ class TBTWMainWindow(QMainWindow):
                 self.act_port_l2.setCheckable(True)
                 
                 for act, name in [(self.act_port_c1, "Serial Com1"), (self.act_port_c2, "Serial Com2"), (self.act_port_l1, "Printer LPT1"), (self.act_port_l2, "Printer LPT2")]:
-                    act.setStatusTip("เลือก Printer Port")
                     self.group_port.addAction(act)
-                    menu_printer_port.addAction(act)
+                    self.menu_printer_port.addAction(act)
                     act.triggered.connect(lambda ch, a=act, n=name: self.update_check_label(self.group_port, a, n))
                 
             # Printing Mode Submenu
-            menu_print_mode = menu_default.addMenu("Printing &Mode")
-            if menu_print_mode:
-                menu_print_mode.setStatusTip("เลือกคุณสมบัติเครื่องพิมพ์")
+            self.menu_print_mode = self.menu_default.addMenu("Printing &Mode")
+            if self.menu_print_mode:
                 self.group_pmode = QActionGroup(self)
                 self.group_pmode.setExclusive(True)
                 
@@ -2153,15 +2130,13 @@ class TBTWMainWindow(QMainWindow):
                 self.act_pm_d.setChecked(True)
                 
                 for act, name in [(self.act_pm_s, "Single Side"), (self.act_pm_d, "Double Side")]:
-                    act.setStatusTip("เลือกคุณสมบัติเครื่องพิมพ์")
                     self.group_pmode.addAction(act)
-                    menu_print_mode.addAction(act)
+                    self.menu_print_mode.addAction(act)
                     act.triggered.connect(lambda ch, a=act, n=name: self.update_check_label(self.group_pmode, a, n))
                 
             # Page Advance Submenu
-            menu_page_adv = menu_default.addMenu("Page &Advance")
-            if menu_page_adv:
-                menu_page_adv.setStatusTip("โหมดหน้ากระดาษ")
+            self.menu_page_adv = self.menu_default.addMenu("Page &Advance")
+            if self.menu_page_adv:
                 self.group_padv = QActionGroup(self)
                 self.group_padv.setExclusive(True)
                 
@@ -2172,15 +2147,13 @@ class TBTWMainWindow(QMainWindow):
                 self.act_pa_n.setChecked(True)
                 
                 for act, name in [(self.act_pa_y, "Yes"), (self.act_pa_n, "No")]:
-                    act.setStatusTip("โหมดหน้ากระดาษ")
                     self.group_padv.addAction(act)
-                    menu_page_adv.addAction(act)
+                    self.menu_page_adv.addAction(act)
                     act.triggered.connect(lambda ch, a=act, n=name: self.update_check_label(self.group_padv, a, n))
                 
             # Set Font Submenu
-            menu_set_font = menu_default.addMenu("Set &Font")
-            if menu_set_font:
-                menu_set_font.setStatusTip("ตั้งค่าตัวอักษรเริ่มต้น")
+            self.menu_set_font = self.menu_default.addMenu("Set &Font")
+            if self.menu_set_font:
                 self.group_font = QActionGroup(self)
                 self.group_font.setExclusive(True)
                 
@@ -2191,15 +2164,13 @@ class TBTWMainWindow(QMainWindow):
                 self.act_font_sans.setChecked(True)
                 
                 for act, name in [(self.act_font_term, "Terminal font for the blind"), (self.act_font_sans, "Microsoft Sans Serif font for the sighted")]:
-                    act.setStatusTip("ตั้งค่าตัวอักษรเริ่มต้น")
                     self.group_font.addAction(act)
-                    menu_set_font.addAction(act)
+                    self.menu_set_font.addAction(act)
                     act.triggered.connect(lambda ch, a=act, n=name: self.update_check_label(self.group_font, a, n))
                 
             # Set Keyboard Submenu
-            menu_set_kb = menu_default.addMenu("Set &Keyboard")
-            if menu_set_kb:
-                menu_set_kb.setStatusTip("ตั้งค่าแป้นพิมพ์ดีด")
+            self.menu_set_kb = self.menu_default.addMenu("Set &Keyboard")
+            if self.menu_set_kb:
                 self.group_kb = QActionGroup(self)
                 self.group_kb.setExclusive(True)
                 
@@ -2210,15 +2181,13 @@ class TBTWMainWindow(QMainWindow):
                 self.act_kb_en.setCheckable(True)
                 
                 for act, name in [(self.act_kb_th, "Thai Keyboard"), (self.act_kb_en, "English Keyboard")]:
-                    act.setStatusTip("ตั้งค่าแป้นพิมพ์ดีด")
                     self.group_kb.addAction(act)
-                    menu_set_kb.addAction(act)
+                    self.menu_set_kb.addAction(act)
                     act.triggered.connect(lambda ch, a=act, n=name: self.update_check_label(self.group_kb, a, n))
                 
             # Thai Braille Level Submenu
-            menu_th_level = menu_default.addMenu("&Thai Braille Level")
-            if menu_th_level:
-                menu_th_level.setStatusTip("เลือกระดับการแปลอักษรเบรลล์ภาษาไทย")
+            self.menu_th_level = self.menu_default.addMenu("&Thai Braille Level")
+            if self.menu_th_level:
                 self.group_th_lvl = QActionGroup(self)
                 self.group_th_lvl.setExclusive(True)
                 
@@ -2228,20 +2197,17 @@ class TBTWMainWindow(QMainWindow):
                 self.act_th_g2 = QAction("Grade &2 with contractions", self)
                 self.act_th_g2.setCheckable(True)
                 
-                self.act_th_g1.setStatusTip("เลือกระดับการแปลอักษรเบรลล์ภาษาไทย ระดับ 1")
-                self.act_th_g2.setStatusTip("เลือกระดับการแปลอักษรเบรลล์ภาษาไทย ระดับ 2 มีคำย่อ")
                 self.group_th_lvl.addAction(self.act_th_g1)
                 self.group_th_lvl.addAction(self.act_th_g2)
-                menu_th_level.addAction(self.act_th_g1)
-                menu_th_level.addAction(self.act_th_g2)
+                self.menu_th_level.addAction(self.act_th_g1)
+                self.menu_th_level.addAction(self.act_th_g2)
                 
                 self.act_th_g1.triggered.connect(lambda: self.set_thai_grade(1))
                 self.act_th_g2.triggered.connect(lambda: self.open_grade2_dialog())
                 
             # English Braille Level Submenu
-            menu_en_level = menu_default.addMenu("&English Braille Level")
-            if menu_en_level:
-                menu_en_level.setStatusTip("เลือกระดับการแปลภาษาเบรลล์ภาษาอังกฤษ")
+            self.menu_en_level = self.menu_default.addMenu("&English Braille Level")
+            if self.menu_en_level:
                 self.group_en_lvl = QActionGroup(self)
                 self.group_en_lvl.setExclusive(True)
                 
@@ -2251,12 +2217,10 @@ class TBTWMainWindow(QMainWindow):
                 self.act_en_g2 = QAction("Grade &2 with contractions", self)
                 self.act_en_g2.setCheckable(True)
                 
-                self.act_en_g1.setStatusTip("เลือกระดับการแปลภาษาเบรลล์ภาษาอังกฤษ ระดับ 1")
-                self.act_en_g2.setStatusTip("เลือกระดับการแปลภาษาเบรลล์ภาษาอังกฤษ ระดับ 2")
                 self.group_en_lvl.addAction(self.act_en_g1)
                 self.group_en_lvl.addAction(self.act_en_g2)
-                menu_en_level.addAction(self.act_en_g1)
-                menu_en_level.addAction(self.act_en_g2)
+                self.menu_en_level.addAction(self.act_en_g1)
+                self.menu_en_level.addAction(self.act_en_g2)
                 
                 self.act_en_g1.triggered.connect(lambda: self.set_en_grade(1))
                 self.act_en_g2.triggered.connect(lambda: self.set_en_grade(2))
@@ -2264,90 +2228,89 @@ class TBTWMainWindow(QMainWindow):
         # ---------------------------------------------------------
         # 4. Tools Menu (Alt+T)
         # ---------------------------------------------------------
-        menu_tools = menubar.addMenu("&Tools")
-        if menu_tools:
-            menu_tools.setStatusTip("เมนูเครื่องมือสร้างสื่อ (Alt+T)")
-            
-            act_tactile = QAction("&Tactile Graphics from Image...\tCtrl+G", self)
-            act_tactile.setShortcut(QKeySequence("Ctrl+G"))
-            act_tactile.setWhatsThis("แปลงภาพเป็นสื่อจุดนูนสัมผัส Image to Braille Tactile Graphics")
-            act_tactile.setStatusTip("แปลงภาพเป็นสื่อจุดสัมผัสเบรลล์ (Ctrl+G)")
-            act_tactile.triggered.connect(self.open_tactile_graphics_dialog)
-            menu_tools.addAction(act_tactile)
+        self.menu_tools = menubar.addMenu("&Tools")
+        if self.menu_tools:
+            self.act_tactile = QAction("&Tactile Graphics from Image...\tCtrl+G", self)
+            self.act_tactile.setShortcut(QKeySequence("Ctrl+G"))
+            self.act_tactile.setWhatsThis("แปลงภาพเป็นสื่อจุดนูนสัมผัส Image to Braille Tactile Graphics")
+            self.act_tactile.setStatusTip("แปลงภาพเป็นสื่อจุดสัมผัสเบรลล์ (Ctrl+G)")
+            self.act_tactile.triggered.connect(self.open_tactile_graphics_dialog)
+            self.menu_tools.addAction(self.act_tactile)
 
         # ---------------------------------------------------------
         # 5. Help Menu (Alt+H)
         # ---------------------------------------------------------
-        menu_help = menubar.addMenu("&Help")
-        if menu_help:
-            menu_help.setStatusTip("เมนูช่วยเหลือ (Alt+H)")
+        self.menu_help = menubar.addMenu("&Help")
+        if self.menu_help:
+            self.act_help_doc = QAction("&Help\tF1", self)
+            self.act_help_doc.setIcon(get_app_icon("ui_icon_help.png"))
+            self.act_help_doc.setShortcut(QKeySequence("F1"))
+            self.act_help_doc.setStatusTip("วิธีการใช้โปรแกรม (F1)")
+            self.act_help_doc.setWhatsThis("เปิดคำแนะนำการใช้งานโปรแกรมและคีย์ลัด คีย์ลัด F1")
+            self.act_help_doc.triggered.connect(self.show_help)
+            self.menu_help.addAction(self.act_help_doc)
             
-            act_help_doc = QAction("&Help\tF1", self)
-            act_help_doc.setIcon(get_app_icon("ui_icon_help.png"))
-            act_help_doc.setShortcut(QKeySequence("F1"))
-            act_help_doc.setStatusTip("คู่มือวิธีใช้โปรแกรม Help")
-            act_help_doc.setWhatsThis("เปิดคำแนะนำการใช้งานโปรแกรมและคีย์ลัด คีย์ลัด F1")
-            act_help_doc.setStatusTip("วิธีการใช้โปรแกรม (F1)")
-            act_help_doc.triggered.connect(self.show_help)
-            menu_help.addAction(act_help_doc)
+            self.act_switch_lang = QAction("&Language Switcher\tCtrl+L", self)
+            self.act_switch_lang.setShortcut(QKeySequence("Ctrl+L"))
+            self.act_switch_lang.setStatusTip("สลับภาษา (Ctrl+L)")
+            self.act_switch_lang.triggered.connect(self.switch_language)
+            self.menu_help.addAction(self.act_switch_lang)
             
-            act_switch_lang = QAction("&Language Switcher\tCtrl+L", self)
-            act_switch_lang.setShortcut(QKeySequence("Ctrl+L"))
-            act_switch_lang.setStatusTip("สลับภาษาอินเตอร์เฟส Language Switcher")
-            act_switch_lang.setStatusTip("สลับภาษา (Ctrl+L)")
-            act_switch_lang.triggered.connect(self.switch_language)
-            menu_help.addAction(act_switch_lang)
+            self.menu_help.addSeparator()
             
-            menu_help.addSeparator()
-            
-            act_buy_lic = QAction("สั่งซื้อลิขสิทธิ์ (&Buy License - PromptPay)...", self)
-            act_buy_lic.setStatusTip("สั่งซื้อลิขสิทธิ์ SiamBraille 1.0 ผ่านระบบพร้อมเพย์")
-            act_buy_lic.triggered.connect(self.show_buy_license)
-            menu_help.addAction(act_buy_lic)
+            self.act_buy_lic = QAction("สั่งซื้อลิขสิทธิ์...", self)
+            self.act_buy_lic.setStatusTip("สั่งซื้อลิขสิทธิ์ SiamBraille 1.0")
+            self.act_buy_lic.triggered.connect(self.show_buy_license)
+            self.menu_help.addAction(self.act_buy_lic)
 
-            act_activate_lic = QAction("เปิดใช้งานรหัสคีย์ (&Activate Key)...", self)
-            act_activate_lic.setStatusTip("กรอกรหัส License Key เพื่อเปิดใช้งานโปรแกรมทันที")
-            act_activate_lic.triggered.connect(self.show_activate_license)
-            menu_help.addAction(act_activate_lic)
+            self.act_activate_lic = QAction("เปิดใช้งานรหัสลิขสิทธิ์...", self)
+            self.act_activate_lic.setStatusTip("กรอกรหัส License Key เพื่อเปิดใช้งานโปรแกรม")
+            self.act_activate_lic.triggered.connect(self.show_activate_license)
+            self.menu_help.addAction(self.act_activate_lic)
 
-            act_check_update = QAction("ตรวจสอบการอัปเดต (&Check for Updates)...", self)
-            act_check_update.setStatusTip("ตรวจสอบเวอร์ชันล่าสุดและแพตช์แก้ไขข้อผิดพลาด")
-            act_check_update.triggered.connect(self.show_check_update)
-            menu_help.addAction(act_check_update)
+            self.act_check_update = QAction("ตรวจสอบการอัปเดต...", self)
+            self.act_check_update.setStatusTip("ตรวจสอบเวอร์ชันล่าสุดและแพตช์แก้ไข")
+            self.act_check_update.triggered.connect(self.show_check_update)
+            self.menu_help.addAction(self.act_check_update)
 
-            menu_help.addSeparator()
+            self.menu_help.addSeparator()
             
-            act_about = QAction("เกี่ยวกับโปรแกรม (&About SiamBraille)...", self)
-            act_about.setStatusTip("เกี่ยวกับโปรแกรม SiamBraille และสถานะลิขสิทธิ์")
-            act_about.triggered.connect(self.show_about)
-            menu_help.addAction(act_about)
+            self.act_about = QAction("เกี่ยวกับโปรแกรม...", self)
+            self.act_about.setStatusTip("เกี่ยวกับโปรแกรม SiamBraille และสถานะลิขสิทธิ์")
+            self.act_about.triggered.connect(self.show_about)
+            self.menu_help.addAction(self.act_about)
             
-            act_contact = QAction("ข้อมูลติดต่อและบริการ (&Contact)...", self)
-            act_contact.setStatusTip("ข้อมูลติดต่อทีมพัฒนา SiamBraille")
-            act_contact.triggered.connect(self.show_contact)
-            menu_help.addAction(act_contact)
+            self.act_contact = QAction("ข้อมูลติดต่อและบริการ...", self)
+            self.act_contact.setStatusTip("ข้อมูลติดต่อทีมพัฒนา SiamBraille")
+            self.act_contact.triggered.connect(self.show_contact)
+            self.menu_help.addAction(self.act_contact)
 
     def update_check_label(self, group: QActionGroup, selected_action: QAction, base_name: str):
+        is_th = getattr(self, "current_lang", "th") == "th"
+        suffix = " (เลือก)" if is_th else " selected"
         for act in group.actions():
-            clean = act.text().replace(" selected", "")
+            clean = act.text().replace(" selected", "").replace(" (เลือก)", "")
             if act == selected_action:
-                act.setText(f"{clean} selected")
+                act.setText(f"{clean}{suffix}")
             else:
                 act.setText(clean)
-
 
     def set_thai_grade(self, g: int):
         self.thai_grade = g
         self.translator.grade = g
+        is_th = getattr(self, "current_lang", "th") == "th"
+        sel = " (เลือก)" if is_th else " selected"
+        g1_base = "ระดับ 1 พร้อมคำย่อพื้นฐาน" if is_th else "&Grade 1 with some short form"
+        g2_base = "ระดับ 2 มีคำย่อ" if is_th else "Grade &2 with contractions"
         if g == 1:
-            self.act_th_g1.setText("&Grade 1 with some short form selected")
-            self.act_th_g2.setText("Grade &2 with contractions")
-            msg = "เลือกระดับการแปลอักษรเบรลล์ภาษาไทย ระดับ 1 แล้ว"
+            self.act_th_g1.setText(f"{g1_base}{sel}")
+            self.act_th_g2.setText(g2_base)
+            msg = "เลือกระดับการแปลอักษรเบรลล์ภาษาไทย ระดับ 1 แล้ว" if is_th else "Thai Braille Grade 1 selected"
         else:
-            self.act_th_g1.setText("&Grade 1 with some short form")
-            self.act_th_g2.setText("Grade &2 with contractions selected")
-            msg = "เลือกระดับการแปลอักษรเบรลล์ภาษาไทย ระดับ 2 (มีคำย่อ) แล้ว"
-        self.lbl_status_msg.setText(msg)
+            self.act_th_g1.setText(g1_base)
+            self.act_th_g2.setText(f"{g2_base}{sel}")
+            msg = "เลือกระดับการแปลอักษรเบรลล์ภาษาไทย ระดับ 2 (มีคำย่อ) แล้ว" if is_th else "Thai Braille Grade 2 selected"
+        self.set_status_message(msg)
         if self.txt_normal.toPlainText().strip():
             self.action_translate()
 
@@ -2359,15 +2322,170 @@ class TBTWMainWindow(QMainWindow):
 
     def set_en_grade(self, g: int):
         self.english_grade = g
+        is_th = getattr(self, "current_lang", "th") == "th"
+        sel = " (เลือก)" if is_th else " selected"
+        g1_base = "ระดับ 1 ไม่มีคำย่อ" if is_th else "Grade &1 with no contractions"
+        g2_base = "ระดับ 2 มีคำย่อ" if is_th else "Grade &2 with contractions"
         if g == 1:
-            self.act_en_g1.setText("Grade &1 with no contractions selected")
-            self.act_en_g2.setText("Grade &2 with contractions")
-            msg = "เลือกระดับการแปลภาษาเบรลล์อังกฤษ ระดับ 1 แล้ว"
+            self.act_en_g1.setText(f"{g1_base}{sel}")
+            self.act_en_g2.setText(g2_base)
+            msg = "เลือกระดับการแปลภาษาเบรลล์อังกฤษ ระดับ 1 แล้ว" if is_th else "English Braille Grade 1 selected"
         else:
-            self.act_en_g1.setText("Grade &1 with no contractions")
-            self.act_en_g2.setText("Grade &2 with contractions selected")
-            msg = "เลือกระดับการแปลภาษาเบรลล์อังกฤษ ระดับ 2 แล้ว"
-        self.lbl_status_msg.setText(msg)
+            self.act_en_g1.setText(g1_base)
+            self.act_en_g2.setText(f"{g2_base}{sel}")
+            msg = "เลือกระดับการแปลภาษาเบรลล์อังกฤษ ระดับ 2 แล้ว" if is_th else "English Braille Grade 2 selected"
+        self.set_status_message(msg)
+
+    def switch_language(self):
+        """สลับภาษาระหว่างภาษาไทย (th) และภาษาอังกฤษ (en) ทันที"""
+        self.current_lang = "en" if getattr(self, "current_lang", "th") == "th" else "th"
+        self.retranslate_ui()
+        msg = "สลับเมนูเป็นภาษาไทยเรียบร้อยแล้ว" if self.current_lang == "th" else "Interface language switched to English"
+        self.set_status_message(msg)
+
+    def retranslate_ui(self):
+        """แปลคำสั่งในเมนู แถบเครื่องมือ และแถบสถานะให้เป็นภาษาที่เลือก 100% ไม่ปนภาษา"""
+        is_th = getattr(self, "current_lang", "th") == "th"
+
+        # 1. Menubar Titles & Actions
+        if hasattr(self, "menu_file") and self.menu_file:
+            self.menu_file.setTitle("แฟ้ม (&F)" if is_th else "&File")
+            self.menu_file.setStatusTip("เมนูแฟ้มข้อมูล (Alt+F)" if is_th else "File Menu (Alt+F)")
+            self.act_new.setText("เปิดเอกสารใหม่ (&N)\tCtrl+N" if is_th else "&New\tCtrl+N")
+            self.act_new.setStatusTip("เปิดเอกสารใหม่ (Ctrl+N)" if is_th else "Create new document (Ctrl+N)")
+            self.act_open.setText("เปิดเอกสารเดิม (&O)...\tCtrl+O" if is_th else "&Open...\tCtrl+O")
+            self.act_open.setStatusTip("เปิดเอกสารเดิม (Ctrl+O)" if is_th else "Open existing document (Ctrl+O)")
+            self.act_translate.setText("แปลเอกสาร (&T)\tCtrl+T" if is_th else "&Translate\tCtrl+T")
+            self.act_translate.setStatusTip("แปลเป็นอักษรเบรลล์ (Ctrl+T)" if is_th else "Translate to Braille (Ctrl+T)")
+            if hasattr(self, "menu_print") and self.menu_print:
+                self.menu_print.setTitle("พิมพ์ (&P)" if is_th else "&Print")
+                self.act_print_reg.setText("พิมพ์อักษรปกติ (&R)" if is_th else "&Regular text")
+                self.act_print_dots.setText("พิมพ์จุดเบรลล์ (&B)" if is_th else "&Braille dots")
+            self.act_braille_print.setText("ส่งไปเครื่องพิมพ์เบรลล์ (&B)...\tCtrl+B" if is_th else "&Braille...\tCtrl+B")
+            self.act_braille_print.setStatusTip("ส่งไปเครื่องพิมพ์เบรลล์ (Ctrl+B)" if is_th else "Export Braille (.BRF) (Ctrl+B)")
+            self.act_print_setup.setText("ตั้งค่าหน้ากระดาษ (&S)...\tCtrl+P" if is_th else "Print &Setup...\tCtrl+P")
+            self.act_print_setup.setStatusTip("ตั้งค่าหน้ากระดาษและเครื่องพิมพ์ (Ctrl+P)" if is_th else "Print Page Setup (Ctrl+P)")
+            self.act_save.setText("บันทึก (&S)\tCtrl+S" if is_th else "&Save\tCtrl+S")
+            self.act_save.setStatusTip("บันทึกเอกสาร (Ctrl+S)" if is_th else "Save document (Ctrl+S)")
+            self.act_save_as.setText("บันทึกเป็น (&A)..." if is_th else "Save &As...")
+            self.act_save_as.setStatusTip("บันทึกเป็นไฟล์ใหม่" if is_th else "Save as new file")
+            self.act_save_all.setText("บันทึกทั้งหมด (&L)\tCtrl+A" if is_th else "Save Al&l\tCtrl+A")
+            self.act_exit.setText("ออกจากโปรแกรม (&X)\tAlt+F4" if is_th else "E&xit\tAlt+F4")
+
+        # 2. Edit Menu
+        if hasattr(self, "menu_edit") and self.menu_edit:
+            self.menu_edit.setTitle("แก้ไข (&E)" if is_th else "&Edit")
+            self.menu_edit.setStatusTip("เมนูแก้ไข (Alt+E)" if is_th else "Edit Menu (Alt+E)")
+            self.act_cut.setText("ตัด (&T)\tCtrl+X" if is_th else "Cu&t\tCtrl+X")
+            self.act_cut.setStatusTip("ตัดข้อความ (Ctrl+X)" if is_th else "Cut text (Ctrl+X)")
+            self.act_copy.setText("คัดลอก (&C)\tCtrl+C" if is_th else "&Copy\tCtrl+C")
+            self.act_copy.setStatusTip("คัดลอกข้อความ (Ctrl+C)" if is_th else "Copy text (Ctrl+C)")
+            self.act_paste.setText("วาง (&P)\tCtrl+V" if is_th else "&Paste\tCtrl+V")
+            self.act_paste.setStatusTip("วางข้อความ (Ctrl+V)" if is_th else "Paste text (Ctrl+V)")
+            self.act_find.setText("ค้นหา (&F)...\tCtrl+F" if is_th else "&Find...\tCtrl+F")
+            self.act_find.setStatusTip("ค้นหาข้อความ (Ctrl+F)" if is_th else "Find text (Ctrl+F)")
+            self.act_replace.setText("แทนที่ (&R)...\tCtrl+R" if is_th else "&Replace...\tCtrl+R")
+            self.act_replace.setStatusTip("แทนที่ข้อความ (Ctrl+R)" if is_th else "Replace text (Ctrl+R)")
+            self.act_font.setText("แบบอักษร (&F)..." if is_th else "&Font...")
+            self.act_wrap.setText("ตัดคำขึ้นบรรทัดใหม่อัตโนมัติ (&W)" if is_th else "&Word Wrap")
+            self.act_fullscreen.setText("แสดงผลเต็มจอ (&S)\tF11" if is_th else "Full &Screen\tF11")
+            self.act_switch_win.setText("สลับหน้าต่างข้อความ (&W)\tF6" if is_th else "Switch &Window\tF6")
+
+        # 3. Default Menu
+        if hasattr(self, "menu_default") and self.menu_default:
+            self.menu_default.setTitle("ค่าเริ่มต้น (&D)" if is_th else "&Default")
+            self.menu_default.setStatusTip("เมนูค่าเริ่มต้น (Alt+D)" if is_th else "Default Settings Menu (Alt+D)")
+            self.act_braille_page.setText("ตั้งค่าหน้ากระดาษเบรลล์ (&B)..." if is_th else "&Braille Page...")
+            self.menu_page_num.setTitle("ตำแหน่งหมายเลขหน้า (&P)" if is_th else "&Page Number Location")
+            
+            sel = " (เลือก)" if is_th else " selected"
+            self.act_pn_tl.setText("บนซ้าย" if is_th else "Top &Left")
+            self.act_pn_tr.setText(("บนขวา" + (sel if self.act_pn_tr.isChecked() else "")) if is_th else ("Top &Right" + (sel if self.act_pn_tr.isChecked() else "")))
+            self.act_pn_bl.setText("ล่างซ้าย" if is_th else "Bottom L&eft")
+            self.act_pn_br.setText("ล่างขวา" if is_th else "Bottom R&ight")
+            
+            self.menu_printer_port.setTitle("พอร์ตเครื่องพิมพ์ (&P)" if is_th else "Printer &Port")
+            self.act_port_c1.setText("Serial Com1" if is_th else "Serial Com&1")
+            self.act_port_c2.setText("Serial Com2" if is_th else "Serial Com&2")
+            self.act_port_l1.setText(("Printer LPT1" + (sel if self.act_port_l1.isChecked() else "")) if is_th else ("Printer LP&T1" + (sel if self.act_port_l1.isChecked() else "")))
+            self.act_port_l2.setText("Printer LPT2" if is_th else "Printer LPT&2")
+
+            self.menu_print_mode.setTitle("โหมดการพิมพ์ (&M)" if is_th else "Printing &Mode")
+            self.act_pm_s.setText("หน้าเดียว" if is_th else "&Single Side")
+            self.act_pm_d.setText(("สองหน้า" + (sel if self.act_pm_d.isChecked() else "")) if is_th else ("&Double Side" + (sel if self.act_pm_d.isChecked() else "")))
+
+            self.menu_page_adv.setTitle("เลื่อนหน้ากระดาษ (&A)" if is_th else "Page &Advance")
+            self.act_pa_y.setText("ใช่" if is_th else "&Yes")
+            self.act_pa_n.setText(("ไม่" + (sel if self.act_pa_n.isChecked() else "")) if is_th else ("&No" + (sel if self.act_pa_n.isChecked() else "")))
+
+            self.menu_set_font.setTitle("แบบอักษรเริ่มต้น (&F)" if is_th else "Set &Font")
+            self.act_font_term.setText("Terminal สำหรับผู้พิการทางสายตา" if is_th else "&Terminal font for the blind")
+            self.act_font_sans.setText(("Microsoft Sans Serif สำหรับสายตาปกติ" + (sel if self.act_font_sans.isChecked() else "")) if is_th else ("&Microsoft Sans Serif font for the sighted" + (sel if self.act_font_sans.isChecked() else "")))
+
+            self.menu_set_kb.setTitle("แป้นพิมพ์ดีด (&K)" if is_th else "Set &Keyboard")
+            self.act_kb_th.setText(("แป้นพิมพ์ไทย" + (sel if self.act_kb_th.isChecked() else "")) if is_th else ("&Thai Keyboard" + (sel if self.act_kb_th.isChecked() else "")))
+            self.act_kb_en.setText("แป้นพิมพ์อังกฤษ" if is_th else "&English Keyboard")
+
+            self.menu_th_level.setTitle("ระดับอักษรเบรลล์ไทย (&T)" if is_th else "&Thai Braille Level")
+            self.act_th_g1.setText(("ระดับ 1 พร้อมคำย่อพื้นฐาน" + (sel if self.thai_grade == 1 else "")) if is_th else ("&Grade 1 with some short form" + (sel if self.thai_grade == 1 else "")))
+            self.act_th_g2.setText(("ระดับ 2 มีคำย่อ" + (sel if self.thai_grade == 2 else "")) if is_th else ("Grade &2 with contractions" + (sel if self.thai_grade == 2 else "")))
+
+            self.menu_en_level.setTitle("ระดับอักษรเบรลล์อังกฤษ (&E)" if is_th else "&English Braille Level")
+            self.act_en_g1.setText(("ระดับ 1 ไม่มีคำย่อ" + (sel if self.english_grade == 1 else "")) if is_th else ("Grade &1 with no contractions" + (sel if self.english_grade == 1 else "")))
+            self.act_en_g2.setText(("ระดับ 2 มีคำย่อ" + (sel if self.english_grade == 2 else "")) if is_th else ("Grade &2 with contractions" + (sel if self.english_grade == 2 else "")))
+
+        # 4. Tools Menu
+        if hasattr(self, "menu_tools") and self.menu_tools:
+            self.menu_tools.setTitle("เครื่องมือ (&T)" if is_th else "&Tools")
+            self.menu_tools.setStatusTip("เมนูเครื่องมือสร้างสื่อ (Alt+T)" if is_th else "Tools Menu (Alt+T)")
+            self.act_tactile.setText("สร้างภาพนูนสัมผัสจากรูปภาพ (&G)...\tCtrl+G" if is_th else "&Tactile Graphics from Image...\tCtrl+G")
+            self.act_tactile.setStatusTip("แปลงภาพเป็นสื่อจุดสัมผัสเบรลล์ (Ctrl+G)" if is_th else "Convert image to tactile Braille graphics (Ctrl+G)")
+
+        # 5. Help Menu
+        if hasattr(self, "menu_help") and self.menu_help:
+            self.menu_help.setTitle("ช่วยเหลือ (&H)" if is_th else "&Help")
+            self.menu_help.setStatusTip("เมนูช่วยเหลือ (Alt+H)" if is_th else "Help Menu (Alt+H)")
+            self.act_help_doc.setText("คู่มือการใช้งาน (&H)\tF1" if is_th else "&Help\tF1")
+            self.act_help_doc.setStatusTip("คู่มือและวิธีใช้โปรแกรม (F1)" if is_th else "User manual and shortcuts (F1)")
+            self.act_switch_lang.setText("Switch to English (&L)\tCtrl+L" if is_th else "สลับเป็นภาษาไทย (Switch to Thai) (&L)\tCtrl+L")
+            self.act_switch_lang.setStatusTip("สลับภาษาเมนู (Ctrl+L)" if is_th else "Switch menu language (Ctrl+L)")
+            self.act_buy_lic.setText("สั่งซื้อลิขสิทธิ์ (&B)..." if is_th else "&Buy License...")
+            self.act_buy_lic.setStatusTip("สั่งซื้อลิขสิทธิ์ SiamBraille 1.0" if is_th else "Purchase SiamBraille 1.0 license")
+            self.act_activate_lic.setText("เปิดใช้งานรหัสลิขสิทธิ์ (&A)..." if is_th else "&Activate License Key...")
+            self.act_activate_lic.setStatusTip("กรอกรหัส License Key เพื่อเปิดใช้งาน" if is_th else "Enter License Key to activate")
+            self.act_check_update.setText("ตรวจสอบการอัปเดต (&U)..." if is_th else "&Check for Updates...")
+            self.act_check_update.setStatusTip("ตรวจสอบเวอร์ชันล่าสุด" if is_th else "Check for the latest updates")
+            self.act_about.setText("เกี่ยวกับโปรแกรม SiamBraille (&A)..." if is_th else "&About SiamBraille...")
+            self.act_about.setStatusTip("เกี่ยวกับโปรแกรม SiamBraille และสถานะลิขสิทธิ์" if is_th else "About SiamBraille and license information")
+            self.act_contact.setText("ข้อมูลติดต่อและบริการ (&C)..." if is_th else "&Contact & Support...")
+            self.act_contact.setStatusTip("ข้อมูลติดต่อทีมพัฒนา" if is_th else "Contact support and development team")
+
+        # 6. Toolbar button
+        if hasattr(self, "btn_tb_translate") and self.btn_tb_translate:
+            self.btn_tb_translate.setText(" แปล" if is_th else " Translate")
+            self.btn_tb_translate.setToolTip("กดปุ่มเพื่อแปลเอกสาร (Ctrl+T)" if is_th else "Click to translate to Braille (Ctrl+T)")
+
+        # 7. Status bar panels
+        if hasattr(self, "lbl_col_limit") and self.lbl_col_limit:
+            self.lbl_col_limit.setText(f"คอลัมน์ต่อบรรทัด : {self.line_length}" if is_th else f"Columns per line: {self.line_length}")
+        if hasattr(self, "lbl_line_limit") and self.lbl_line_limit:
+            self.lbl_line_limit.setText(f"บรรทัดต่อหน้า : {self.page_length}" if is_th else f"Lines per page: {self.page_length}")
+        if hasattr(self, "lbl_report") and self.lbl_report:
+            txt = self.lbl_report.text().strip()
+            if "แปลแล้ว" in txt or "Translated" in txt:
+                self.lbl_report.setText("     ข้อมูลไฟล์ที่แปลแล้ว  " if is_th else "     Translated File  ")
+            elif "ข้อมูลเดิม" in txt or "Original" in txt:
+                self.lbl_report.setText("ข้อมูลเดิม" if is_th else "Original Text")
+            elif "ยังไม่แปลง" in txt or "Unconverted" in txt:
+                self.lbl_report.setText("ข้อมูลใหม่ยังไม่แปลง" if is_th else "Unconverted Text")
+        if hasattr(self, "lbl_total_page") and self.lbl_total_page:
+            txt = self.lbl_total_page.text()
+            if ":" in txt:
+                val = txt.split(":")[-1].strip()
+                prefix = "จำนวนหน้า : " if is_th else "Total pages : "
+                self.lbl_total_page.setText(f"{prefix}{val}" if val else prefix)
+
+        self.update_title()
 
     def setup_toolbar(self):
         toolbar = QToolBar("ToolBar1", self)
@@ -2450,15 +2568,15 @@ class TBTWMainWindow(QMainWindow):
         toolbar.addAction(act_paste)
         
         # 3. Big "แปล" Button (SpeedButton3 ใน Delphi)
-        btn_translate = QToolButton(self)
-        btn_translate.setIcon(get_app_icon("glyph_translate.png"))
-        btn_translate.setText(" แปล")
-        btn_translate.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        btn_translate.setToolTip("กดปุ่มเพื่อแปลเอกสาร (Ctrl+T)")
-        btn_translate.setAccessibleName("ปุ่มแปลเอกสารเป็นอักษรเบรลล์ Translate (Ctrl+T)")
-        btn_translate.setAccessibleDescription("กดปุ่มนี้หรือกด Ctrl+T เพื่อแปลข้อความในกล่องข้อมูลเดิมเป็นอักษรเบรลล์")
-        btn_translate.setStatusTip("แปลเป็นเบรลล์ (Ctrl+T)")
-        btn_translate.setStyleSheet("""
+        self.btn_tb_translate = QToolButton(self)
+        self.btn_tb_translate.setIcon(get_app_icon("glyph_translate.png"))
+        self.btn_tb_translate.setText(" แปล")
+        self.btn_tb_translate.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.btn_tb_translate.setToolTip("กดปุ่มเพื่อแปลเอกสาร (Ctrl+T)")
+        self.btn_tb_translate.setAccessibleName("ปุ่มแปลเอกสารเป็นอักษรเบรลล์ Translate (Ctrl+T)")
+        self.btn_tb_translate.setAccessibleDescription("กดปุ่มนี้หรือกด Ctrl+T เพื่อแปลข้อความในกล่องข้อมูลเดิมเป็นอักษรเบรลล์")
+        self.btn_tb_translate.setStatusTip("แปลเป็นเบรลล์ (Ctrl+T)")
+        self.btn_tb_translate.setStyleSheet("""
             QToolButton {
                 font-family: 'Tahoma', 'MS Sans Serif';
                 font-weight: bold;
@@ -2478,8 +2596,8 @@ class TBTWMainWindow(QMainWindow):
                 background-color: #d8d8d8;
             }
         """)
-        btn_translate.clicked.connect(self.action_translate)
-        toolbar.addWidget(btn_translate)
+        self.btn_tb_translate.clicked.connect(self.action_translate)
+        toolbar.addWidget(self.btn_tb_translate)
         
         toolbar.addSeparator()
         
@@ -2546,51 +2664,46 @@ class TBTWMainWindow(QMainWindow):
             }
         """
         
-        self.lbl_report = QLabel("     ข้อมูลไฟล์ที่แปลแล้ว  ")
+        # 4 Panels: [ข้อมูลเดิม/แปลแล้ว] | [จำนวนหน้า] | [คอลัมน์ต่อบรรทัด] | [บรรทัดต่อหน้า]
+        is_th = getattr(self, "current_lang", "th") == "th"
+        self.lbl_report = QLabel("     ข้อมูลไฟล์ที่แปลแล้ว  " if is_th else "     Translated File  ")
         self.lbl_report.setFixedWidth(160)
         self.lbl_report.setStyleSheet(panel_style)
-        self.lbl_report.setAccessibleName("สถานะ: ข้อมูลไฟล์ที่แปลแล้ว")
+        self.lbl_report.setAccessibleName("สถานะ: ข้อมูลไฟล์ที่แปลแล้ว" if is_th else "Status: Translated File")
         
-        self.lbl_total_page = QLabel("Total page : ")
+        self.lbl_total_page = QLabel("จำนวนหน้า : " if is_th else "Total pages : ")
         self.lbl_total_page.setFixedWidth(180)
         self.lbl_total_page.setStyleSheet(panel_style)
-        self.lbl_total_page.setAccessibleName("จำนวนหน้าเบรลล์ทั้งหมด")
+        self.lbl_total_page.setAccessibleName("จำนวนหน้าเบรลล์ทั้งหมด" if is_th else "Total Braille Pages")
         
-        self.lbl_col_limit = QLabel(f"Colume per lines: {self.line_length}")
+        self.lbl_col_limit = QLabel(f"คอลัมน์ต่อบรรทัด : {self.line_length}" if is_th else f"Columns per line: {self.line_length}")
         self.lbl_col_limit.setFixedWidth(180)
         self.lbl_col_limit.setStyleSheet(panel_style)
-        self.lbl_col_limit.setAccessibleName(f"ความกว้างคอลัมน์ต่อบรรทัด: {self.line_length} คอลัมน์")
+        self.lbl_col_limit.setAccessibleName(f"ความกว้างคอลัมน์ต่อบรรทัด: {self.line_length}" if is_th else f"Columns per line: {self.line_length}")
         
-        self.lbl_line_limit = QLabel(f"Lines per page: {self.page_length}")
+        self.lbl_line_limit = QLabel(f"บรรทัดต่อหน้า : {self.page_length}" if is_th else f"Lines per page: {self.page_length}")
         self.lbl_line_limit.setStyleSheet(panel_style)
-        self.lbl_line_limit.setAccessibleName(f"ความยาวบรรทัดต่อหน้า: {self.page_length} บรรทัด")
+        self.lbl_line_limit.setAccessibleName(f"ความยาวบรรทัดต่อหน้า: {self.page_length}" if is_th else f"Lines per page: {self.page_length}")
         
-        # License Badge Panel
-        self.lbl_license_badge = QLabel(" 🔑 รุ่นทดลองใช้ ")
-        self.lbl_license_badge.setToolTip("คลิกเพื่อดูรายละเอียดลิขสิทธิ์และการลงทะเบียน")
-        self.lbl_license_badge.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.lbl_license_badge.mousePressEvent = lambda e: self.show_about()
-        
-        # เพิ่มพาเนลเรียงจากซ้ายไปขวาตามภาพต้นฉบับ
+        # เพิ่มพาเนลเรียงจากซ้ายไปขวา สะอาด เรียบร้อย ไม่แสดงสถานะลิขสิทธิ์โจ่งแจ้งบนหน้าจอหลัก
         statusbar.addWidget(self.lbl_report)
         statusbar.addWidget(self.lbl_total_page)
         statusbar.addWidget(self.lbl_col_limit)
         statusbar.addWidget(self.lbl_line_limit, 1)
-        statusbar.addPermanentWidget(self.lbl_license_badge)
-        self.update_license_ui()
 
     def on_text_changed(self):
         text = self.txt_normal.toPlainText()
+        is_th = getattr(self, "current_lang", "th") == "th"
         if text.strip():
             lines = text.count('\n') + 1
             body_cap = max(1, self.page_length - 1)
             pages = max(1, (lines + body_cap - 1) // body_cap)
-            self.lbl_total_page.setText(f"Total page : {pages}")
-            self.lbl_total_page.setAccessibleName(f"จำนวนหน้า: {pages} หน้า")
-            self.lbl_report.setText("ข้อมูลใหม่ยังไม่แปลง")
+            self.lbl_total_page.setText(f"จำนวนหน้า : {pages}" if is_th else f"Total pages : {pages}")
+            self.lbl_total_page.setAccessibleName(f"จำนวนหน้า: {pages} หน้า" if is_th else f"Total pages: {pages}")
+            self.lbl_report.setText("ข้อมูลใหม่ยังไม่แปลง" if is_th else "Unconverted Text")
         else:
-            self.lbl_total_page.setText("Total page : ")
-            self.lbl_total_page.setAccessibleName("จำนวนหน้า: ยังไม่มีข้อมูล")
+            self.lbl_total_page.setText("จำนวนหน้า : " if is_th else "Total pages : ")
+            self.lbl_total_page.setAccessibleName("จำนวนหน้า: ยังไม่มีข้อมูล" if is_th else "No page data")
 
     def format_braille_document(self, raw_text: str):
         """
@@ -2763,13 +2876,14 @@ class TBTWMainWindow(QMainWindow):
 
     def action_translate(self):
         raw_text = self.txt_normal.toPlainText()
+        is_th = getattr(self, "current_lang", "th") == "th"
         if not raw_text.strip():
-            self.lbl_report.setText("ข้อมูลเดิม(Normal Font)")
-            self.set_status_message("ไม่มีข้อความให้แปล กรุณาพิมพ์หรือเปิดไฟล์ก่อน")
+            self.lbl_report.setText("ข้อมูลเดิม" if is_th else "Original Text")
+            self.set_status_message("ไม่มีข้อความให้แปล กรุณาพิมพ์หรือเปิดไฟล์ก่อน" if is_th else "No text to translate. Please enter or open a file first.")
             return
             
-        self.lbl_report.setText("กำลังแปล...")
-        self.set_status_message("กำลังแปลเป็นอักษรเบรลล์ กรุณารอสักครู่...")
+        self.lbl_report.setText("กำลังแปล..." if is_th else "Translating...")
+        self.set_status_message("กำลังแปลเป็นอักษรเบรลล์ กรุณารอสักครู่..." if is_th else "Translating to Braille, please wait...")
         QApplication.processEvents()
         
         # จัดหน้าและแปลเป็นอักษรเบรลล์ (เว้นบรรทัดที่ 1 ไว้ใส่เลขหน้าตามแบบฉบับ Delphi TBTW)
@@ -2783,12 +2897,12 @@ class TBTWMainWindow(QMainWindow):
         # อัปเดตกล่องแสดงผลฝั่งขวา (Thai Line Preview + Braille Dots)
         self.txt_braille_thai.setPlainText(thai_display)
         self.txt_braille.setPlainText(braille_display)
-        self.lbl_report.setText("     ข้อมูลไฟล์ที่แปลแล้ว  ")
+        self.lbl_report.setText("     ข้อมูลไฟล์ที่แปลแล้ว  " if is_th else "     Translated File  ")
         
         self.total_page = total_pages
-        self.lbl_total_page.setText(f"Total page : {total_pages}")
-        self.lbl_total_page.setAccessibleName(f"จำนวนหน้าเบรลล์: {total_pages} หน้า")
-        self.set_status_message(f"แปลเอกสารเรียบร้อยแล้ว จำนวน {total_pages} หน้า รวมหน้าสุดท้าย {lines_in_last} บรรทัด")
+        self.lbl_total_page.setText(f"จำนวนหน้า : {total_pages}" if is_th else f"Total pages : {total_pages}")
+        self.lbl_total_page.setAccessibleName(f"จำนวนหน้าเบรลล์: {total_pages} หน้า" if is_th else f"Total Braille Pages: {total_pages}")
+        self.set_status_message(f"แปลเอกสารเรียบร้อยแล้ว จำนวน {total_pages} หน้า รวมหน้าสุดท้าย {lines_in_last} บรรทัด" if is_th else f"Translation complete: {total_pages} pages ({lines_in_last} lines on last page)")
         
         # สร้างชื่อไฟล์จำลองตามต้นฉบับ Delphi
         base_name = os.path.splitext(self.current_filename)[0]
@@ -2809,14 +2923,15 @@ class TBTWMainWindow(QMainWindow):
         dlg.exec()
 
     def file_new(self):
+        is_th = getattr(self, "current_lang", "th") == "th"
         self.txt_normal.clear()
         self.txt_braille_thai.clear()
         self.txt_braille.clear()
         self.current_filename = "c:\\noname.txt"
         self.update_title()
-        self.lbl_report.setText("     ข้อมูลไฟล์ที่แปลแล้ว  ")
-        self.lbl_total_page.setText("Total page : ")
-        self.lbl_status_msg.setText("เปิดเอกสารใหม่เรียบร้อยแล้ว (c:\\noname.txt)")
+        self.lbl_report.setText("     ข้อมูลไฟล์ที่แปลแล้ว  " if is_th else "     Translated File  ")
+        self.lbl_total_page.setText("จำนวนหน้า : " if is_th else "Total pages : ")
+        self.set_status_message("เปิดเอกสารใหม่เรียบร้อยแล้ว (c:\\noname.txt)" if is_th else "New document opened (c:\\noname.txt)")
         self.txt_normal.setFocus()
 
     def read_text_file(self, filepath: str) -> str:
@@ -3323,9 +3438,6 @@ class TBTWMainWindow(QMainWindow):
                 self.set_status_message("แทรกภาพจุดเบรลล์นูนสัมผัสลงในเอกสารสำเร็จ")
                 speak_nvda("แทรกภาพจุดเบรลล์นูนสัมผัสลงในเอกสารสำเร็จ")
 
-    def switch_language(self):
-        self.lbl_report.setText("  สลับภาษา  ")
-        self.lbl_status_msg.setText("สลับภาษาอินเตอร์เฟสสำเร็จ")
 
     def show_buy_license(self):
         dlg = LicensePurchaseDialog(self)
@@ -3342,38 +3454,6 @@ class TBTWMainWindow(QMainWindow):
     def update_license_ui(self):
         mgr = license_guard.global_license_manager
         mgr.check_local_license()
-        if mgr.is_licensed:
-            owner = mgr.license_info.get("owner", "Active")
-            lic_type = mgr.license_info.get("type", "Lifetime").title()
-            if hasattr(self, "lbl_license_badge"):
-                self.lbl_license_badge.setText(f" 🔑 {lic_type} ({owner}) ")
-                self.lbl_license_badge.setStyleSheet("""
-                    QLabel {
-                        border: 1px solid #16a34a;
-                        background-color: #16a34a;
-                        color: #ffffff;
-                        font-family: 'Tahoma', 'Segoe UI';
-                        font-size: 11px;
-                        font-weight: bold;
-                        padding: 2px 8px;
-                        border-radius: 2px;
-                    }
-                """)
-        else:
-            if hasattr(self, "lbl_license_badge"):
-                self.lbl_license_badge.setText(" 🔑 รุ่นทดลองใช้ (14 วัน) ")
-                self.lbl_license_badge.setStyleSheet("""
-                    QLabel {
-                        border: 1px solid #ca8a04;
-                        background-color: #ca8a04;
-                        color: #ffffff;
-                        font-family: 'Tahoma', 'Segoe UI';
-                        font-size: 11px;
-                        font-weight: bold;
-                        padding: 2px 8px;
-                        border-radius: 2px;
-                    }
-                """)
         self.update_title()
 
     def show_about(self):

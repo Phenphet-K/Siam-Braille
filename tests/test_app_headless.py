@@ -3,7 +3,11 @@ from PyQt6.QtWidgets import QApplication
 from tbtw_app import TBTWMainWindow
 
 def test():
-    app = QApplication(sys.argv)
+    import os
+    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+    from tbtw_app import ReportTranslateDialog
+    ReportTranslateDialog.exec = lambda self: 1
+    app = QApplication.instance() or QApplication(sys.argv)
     win = TBTWMainWindow()
     print("Window created successfully!")
     print("Title:", win.windowTitle())
