@@ -202,26 +202,38 @@ THAI_TO_ARABIC_DIGIT = {
 
 def get_resource_path(name: str) -> str:
     """ค้นหาไฟล์ resource ในโฟลเดอร์รันไทม์ทั้งหมด ทั้งโหมดสคริปต์, โหมด exe ใน dist และ _internal แบบไม่ขึ้นกับ drive letter หรือ architecture"""
-    candidate_dirs = []
+    base_dirs = []
     if getattr(sys, 'frozen', False):
         exe_dir = os.path.dirname(sys.executable)
-        candidate_dirs.append(exe_dir)
-        candidate_dirs.append(os.path.join(exe_dir, "_internal"))
-        candidate_dirs.append(getattr(sys, '_MEIPASS', ''))
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    candidate_dirs.append(base_dir)
-    candidate_dirs.append(os.path.join(base_dir, "_internal"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "SiamBraille"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "SiamBraille", "_internal"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "TBTW3"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "TBTW3", "_internal"))
+        base_dirs.extend([exe_dir, os.path.join(exe_dir, "_internal")])
+        meipass = getattr(sys, '_MEIPASS', '')
+        if meipass:
+            base_dirs.append(meipass)
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dirs.extend([
+        script_dir,
+        os.path.join(script_dir, "dist", "SiamBraille"),
+        os.path.join(script_dir, "dist", "SiamBraille", "_internal")
+    ])
+    
+    candidate_dirs = []
+    for b in base_dirs:
+        if b and os.path.exists(b):
+            candidate_dirs.append(b)
+            candidate_dirs.append(os.path.join(b, "assets"))
+            candidate_dirs.append(os.path.join(b, "assets", "rules"))
+            candidate_dirs.append(os.path.join(b, "assets", "fonts"))
+            candidate_dirs.append(os.path.join(b, "assets", "icons"))
+            candidate_dirs.append(os.path.join(b, "Tables"))
+            candidate_dirs.append(os.path.join(b, "data"))
     
     for d in candidate_dirs:
         if d and os.path.exists(d):
             p = os.path.join(d, name)
             if os.path.exists(p):
                 return p
-    return os.path.join(base_dir, name)
+    return os.path.join(script_dir, name)
 
 
 class LibLouisBridge:

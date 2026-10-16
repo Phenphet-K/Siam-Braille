@@ -66,30 +66,38 @@ except ImportError:
 
 def get_resource_path(rel_path: str) -> str:
     """ค้นหาไฟล์ resource ในโฟลเดอร์รันไทม์ทั้งหมด ทั้งโหมดสคริปต์, โหมด exe ใน dist และ _internal แบบไม่ขึ้นกับ drive letter หรือ architecture"""
-    candidate_dirs = []
+    base_dirs = []
     if getattr(sys, 'frozen', False):
         exe_dir = os.path.dirname(sys.executable)
-        candidate_dirs.append(exe_dir)
-        candidate_dirs.append(os.path.join(exe_dir, "_internal"))
-        candidate_dirs.append(getattr(sys, '_MEIPASS', ''))
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    candidate_dirs.append(base_dir)
-    candidate_dirs.append(os.path.join(base_dir, "assets"))
-    candidate_dirs.append(os.path.join(base_dir, "assets", "icons"))
-    candidate_dirs.append(os.path.join(base_dir, "assets", "fonts"))
-    candidate_dirs.append(os.path.join(base_dir, "assets", "rules"))
-    candidate_dirs.append(os.path.join(base_dir, "_internal"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "SiamBraille"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "SiamBraille", "_internal"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "TBTW3"))
-    candidate_dirs.append(os.path.join(base_dir, "dist", "TBTW3", "_internal"))
+        base_dirs.extend([exe_dir, os.path.join(exe_dir, "_internal")])
+        meipass = getattr(sys, '_MEIPASS', '')
+        if meipass:
+            base_dirs.append(meipass)
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dirs.extend([
+        script_dir,
+        os.path.join(script_dir, "dist", "SiamBraille"),
+        os.path.join(script_dir, "dist", "SiamBraille", "_internal")
+    ])
+    
+    candidate_dirs = []
+    for b in base_dirs:
+        if b and os.path.exists(b):
+            candidate_dirs.append(b)
+            candidate_dirs.append(os.path.join(b, "assets"))
+            candidate_dirs.append(os.path.join(b, "assets", "rules"))
+            candidate_dirs.append(os.path.join(b, "assets", "fonts"))
+            candidate_dirs.append(os.path.join(b, "assets", "icons"))
+            candidate_dirs.append(os.path.join(b, "Tables"))
+            candidate_dirs.append(os.path.join(b, "data"))
     
     for d in candidate_dirs:
         if d and os.path.exists(d):
             p = os.path.join(d, rel_path)
             if os.path.exists(p):
                 return p
-    return os.path.join(base_dir, rel_path)
+    return os.path.join(script_dir, rel_path)
 
 
 # NVDA Screen Reader Controller Client Bridge (Local Project Only - Architecture Aware)
@@ -1566,11 +1574,9 @@ class TBTWMainWindow(QMainWindow):
         self.page_length = 25
         self.total_page = 0
         
-        # โหลดค่าตั้งค่าหน้ากระดาษเดิมจาก SiamBraille.def / tbt.def
+        # โหลดค่าตั้งค่าหน้ากระดาษเดิมจาก SiamBraille.def
         try:
             def_path = get_resource_path("SiamBraille.def")
-            if not os.path.exists(def_path):
-                def_path = get_resource_path("tbt.def")
             if os.path.exists(def_path):
                 import struct
                 with open(def_path, 'rb') as f_def:
@@ -3204,18 +3210,17 @@ class TBTWMainWindow(QMainWindow):
             self.on_text_changed()
             self.lbl_status_msg.setText(f"ตั้งค่าหน้ากระดาษ: บรรทัดละ {self.line_length} คอลัมน์, หน้าละ {self.page_length} บรรทัด")
             
-            # บันทึกลง SiamBraille.def และ tbt.def
+            # บันทึกลง SiamBraille.def
             try:
-                for def_name in ["SiamBraille.def", "tbt.def"]:
-                    def_path = get_resource_path(def_name)
-                    if os.path.exists(def_path):
-                        import struct
-                        with open(def_path, 'r+b') as f_def:
-                            b_def = bytearray(f_def.read())
-                            if len(b_def) >= 8:
-                                struct.pack_into('<II', b_def, 0, self.line_length, self.page_length)
-                                f_def.seek(0)
-                                f_def.write(b_def)
+                def_path = get_resource_path("SiamBraille.def")
+                if os.path.exists(def_path):
+                    import struct
+                    with open(def_path, 'r+b') as f_def:
+                        b_def = bytearray(f_def.read())
+                        if len(b_def) >= 8:
+                            struct.pack_into('<II', b_def, 0, self.line_length, self.page_length)
+                            f_def.seek(0)
+                            f_def.write(b_def)
             except Exception:
                 pass
 

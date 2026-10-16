@@ -14,8 +14,8 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=G:\TBTW\dist
 OutputBaseFilename=SiamBraille_Setup_v1.0
-SetupIconFile=G:\TBTW\SiamBraille.ico
-UninstallDisplayIcon={app}\SiamBraille.ico
+SetupIconFile=G:\TBTW\assets\icons\SiamBraille.ico
+UninstallDisplayIcon={app}\assets\icons\SiamBraille.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -31,12 +31,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "G:\TBTW\dist\SiamBraille\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Register SimBraille Font
-Source: "G:\TBTW\dist\SiamBraille\SIMBRL.TTF"; DestDir: "{autofonts}"; FontInstall: "SimBraille"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "G:\TBTW\dist\SiamBraille\assets\fonts\SIMBRL.TTF"; DestDir: "{autofonts}"; FontInstall: "SimBraille"; Flags: onlyifdoesntexist uninsneveruninstall
 
 [Icons]
-Name: "{group}\{#MyAppName} 1.0"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\SiamBraille.ico"
+Name: "{group}\{#MyAppName} 1.0"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icons\SiamBraille.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName} 1.0"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\SiamBraille.ico"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName} 1.0"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icons\SiamBraille.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

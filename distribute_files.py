@@ -7,25 +7,15 @@ import shutil
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DIST_DIRS = [
-    os.path.join(BASE_DIR, "dist", "SiamBraille"),
-    os.path.join(BASE_DIR, "dist", "TBTW3")
+    os.path.join(BASE_DIR, "dist", "SiamBraille")
 ]
 
 FILES_TO_COPY = [
-    # ตารางอักษรเบรลล์ และพจนานุกรม
-    "CH46.tab", "CH78.tab", "d2branch.tri", "d2tail.tri", "SiamBraille.dic", "Tbt.dic",
-    "G2Def.def", "Mcheck.def", "setkey.def", "SiamBraille.def", "tbt.def",
-    # ฟอนต์เบรลล์ SimBraille และตัวติดตั้งฟอนต์
-    "SIMBRL.TTF", "fontinstall.bat", "font.reg",
-    # ไอคอน SiamBraille
-    "SiamBraille.ico",
     # DLLs 64-bit สำหรับ LibLouis, NVDA และประมวลผล
-    "liblouis64.dll", "nvdaControllerClient64.dll", "Nbreak.dll",
-    # ตัวรันโปรแกรมเสริม
-    "run_SiamBraille.bat"
+    "liblouis64.dll", "nvdaControllerClient64.dll", "Nbreak.dll"
 ]
 
-DIRS_TO_COPY = ["data", "Tables", "logo", "assets"]
+DIRS_TO_COPY = ["data", "Tables", "assets"]
 
 def distribute():
     for target_dir in DIST_DIRS:
