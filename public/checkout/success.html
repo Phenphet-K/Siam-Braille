@@ -177,6 +177,10 @@
       <h1>ชำระเงินสำเร็จเรียบร้อย!</h1>
       <p class="subtitle">ขอขอบคุณสำหรับการสนับสนุนซอฟต์แวร์ SiamBraille 1.0 เพื่อคนตาบอดไทย</p>
 
+      <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 20px; font-size: 13px; color: #34d399; margin-bottom: 16px;">
+        <span>🛡️</span> ตรวจสอบยอดเงินโอนจริงผ่าน Stripe และออกใบเสร็จเรียบร้อย
+      </div>
+
       <div class="key-box">
         <div class="key-box-label">รหัสลิขสิทธิ์ของคุณ (License Key)</div>
         <div class="key-display" id="licenseKey">XXXX-XXXX-XXXX-XXXX</div>
@@ -189,12 +193,21 @@
         <button class="btn btn-secondary" onclick="downloadKeyFile()">
           💾 ดาวน์โหลด license.key
         </button>
+        <a href="#" id="btnViewReceipt" target="_blank" class="btn btn-secondary" style="display: none; border-color: #38bdf8; color: #38bdf8;">
+          🧾 ดูใบเสร็จรับเงิน (Stripe Receipt)
+        </a>
+        <a href="#" id="btnDownloadPdfReceipt" target="_blank" class="btn btn-secondary" style="display: none;">
+          📥 ดาวน์โหลดใบเสร็จ PDF
+        </a>
       </div>
 
       <div class="info-list">
         <div><strong>ผู้ถือสิทธิ์:</strong> <span id="infoOwner">-</span></div>
         <div><strong>แพ็กเกจ:</strong> <span id="infoPlan">-</span></div>
         <div><strong>โควต้า:</strong> <span id="infoDevices">1</span> เครื่องคอมพิวเตอร์</div>
+        <div id="receiptStatusRow" style="margin-top: 6px; color: #34d399;">
+          <strong>สถานะใบเสร็จ:</strong> ออกใบเสร็จรับเงินทางอีเมลและระบบ Stripe สำเร็จ
+        </div>
         <div style="margin-top: 12px; font-size: 13px; color: #38bdf8;">
           💡 <strong>วิธีเปิดใช้งาน:</strong> เปิดโปรแกรม SiamBraille บนคอมพิวเตอร์ของคุณ ไปที่เมนู <strong>ช่วยเหลือ (Help) → ลงทะเบียนสิทธิ์การใช้งาน (Activate License)</strong> แล้ววางรหัสคีย์นี้ลงไป
         </div>
@@ -227,7 +240,6 @@
       }
 
       try {
-        // ลองยิง API ไปที่ Backend
         const apiBase = (window.location.port === "8000" || window.location.hostname === "localhost") 
           ? "" 
           : "https://siam-braille.web.app";
@@ -246,6 +258,20 @@
           document.getElementById('infoOwner').innerText = currentOrder.customer_name || 'ลูกค้า';
           document.getElementById('infoPlan').innerText = currentOrder.plan_id || 'Personal';
           document.getElementById('infoDevices').innerText = currentOrder.max_devices || '1';
+
+          // ตรวจสอบและแสดงปุ่มใบเสร็จรับเงิน Stripe
+          const rUrl = data.receipt_url || currentOrder.receipt_url;
+          if (rUrl) {
+            const btnR = document.getElementById('btnViewReceipt');
+            btnR.href = rUrl;
+            btnR.style.display = 'inline-flex';
+          }
+          const pdfUrl = data.invoice_pdf || currentOrder.invoice_pdf;
+          if (pdfUrl) {
+            const btnPdf = document.getElementById('btnDownloadPdfReceipt');
+            btnPdf.href = pdfUrl;
+            btnPdf.style.display = 'inline-flex';
+          }
         } else {
           showError(data.message || "การชำระเงินยังไม่สมบูรณ์");
         }
