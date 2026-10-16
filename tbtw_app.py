@@ -562,6 +562,10 @@ class BraillePrintingDialog(QDialog):
         self.cbo_printers.addItem("บันทึกเป็นไฟล์ .BRF (Braille Formatted File)", "FILE_BRF")
         self.cbo_printers.addItem("พอร์ตขนานดั้งเดิม: Printer LPT1", "LPT1")
         self.cbo_printers.addItem("พอร์ตขนานดั้งเดิม: Printer LPT2", "LPT2")
+        self.cbo_printers.addItem("พอร์ตสื่อสารซีเรียล / USB Virtual: COM1", "COM1")
+        self.cbo_printers.addItem("พอร์ตสื่อสารซีเรียล / USB Virtual: COM2", "COM2")
+        self.cbo_printers.addItem("พอร์ตสื่อสารซีเรียล / USB Virtual: COM3", "COM3")
+        self.cbo_printers.addItem("พอร์ตสื่อสารซีเรียล / USB Virtual: COM4", "COM4")
         port_layout.addWidget(self.cbo_printers)
         layout.addWidget(port_box)
         
@@ -736,6 +740,13 @@ class TactileGraphicsDialog(QDialog):
         grp_opt = QGroupBox("การตั้งค่าภาพนูนสัมผัส (Tactile Settings)")
         opt_layout = QHBoxLayout(grp_opt)
         
+        opt_layout.addWidget(QLabel("วิธีแปลง:"))
+        self.cbo_algo = QComboBox()
+        self.cbo_algo.addItem("ขีดแบ่งความเข้ม (Threshold)", "threshold")
+        self.cbo_algo.addItem("กระจายจุดเฉดสี (Dithering)", "dither")
+        self.cbo_algo.setAccessibleName("เลือกวิธีการแปลงภาพเป็นจุดสัมผัส")
+        opt_layout.addWidget(self.cbo_algo)
+
         opt_layout.addWidget(QLabel("ความกว้าง (คอลัมน์):"))
         self.spin_cols = QSpinBox()
         self.spin_cols.setRange(10, 80)
@@ -743,18 +754,18 @@ class TactileGraphicsDialog(QDialog):
         self.spin_cols.setAccessibleName("ความกว้างจำนวนคอลัมน์อักษรเบรลล์")
         opt_layout.addWidget(self.spin_cols)
         
-        opt_layout.addWidget(QLabel("ระดับความเข้มข้น (Threshold):"))
+        opt_layout.addWidget(QLabel("ระดับความเข้ม (Threshold):"))
         self.spin_thresh = QSpinBox()
         self.spin_thresh.setRange(10, 250)
         self.spin_thresh.setValue(128)
         self.spin_thresh.setAccessibleName("ค่าขีดแบ่งความเข้มขาวดำ Threshold")
         opt_layout.addWidget(self.spin_thresh)
         
-        self.chk_invert = QCheckBox("กลับสีขาวดำ (&Invert)")
+        self.chk_invert = QCheckBox("กลับสี (&Invert)")
         self.chk_invert.setAccessibleName("ตัวเลือกกลับค่าสีขาวดำ")
         opt_layout.addWidget(self.chk_invert)
         
-        btn_process = QPushButton("แปลงเป็นจุดเบรลล์ (&Convert)")
+        btn_process = QPushButton("แปลง (&Convert)")
         btn_process.setDefault(True)
         btn_process.setStyleSheet("font-weight: bold; color: #000080;")
         btn_process.setAccessibleName("ปุ่มเริ่มการแปลงภาพเป็นจุดเบรลล์")
@@ -771,6 +782,12 @@ class TactileGraphicsDialog(QDialog):
         
         # ปุ่มควบคุมด้านล่าง
         bottom_layout = QHBoxLayout()
+        
+        btn_export = QPushButton("ส่งออกไฟล์เบรลล์ (.BRF)...")
+        btn_export.setAccessibleName("ส่งออกผลลัพธ์ภาพนูนเป็นไฟล์ BRF สำหรับเครื่องพิมพ์เบรลล์")
+        btn_export.clicked.connect(self.export_brf)
+        bottom_layout.addWidget(btn_export)
+        
         bottom_layout.addStretch()
         
         btn_insert = QPushButton("นำเข้าสู่เอกสาร (&Insert)")
@@ -810,6 +827,7 @@ class TactileGraphicsDialog(QDialog):
                 
             cols = self.spin_cols.value()
             threshold = self.spin_thresh.value()
+            algo = self.cbo_algo.currentData()
             
             target_width = cols * 2
             aspect = im.height / max(im.width, 1)
@@ -817,6 +835,10 @@ class TactileGraphicsDialog(QDialog):
             target_height = max(4, ((target_height + 3) // 4) * 4)
             
             im = im.resize((target_width, target_height), Image.Resampling.LANCZOS)
+            
+            if algo == "dither":
+                im = im.convert('1', dither=Image.Dither.FLOYDSTEINBERG)
+                
             pixels = im.load()
             if pixels is None:
                 return
@@ -839,16 +861,44 @@ class TactileGraphicsDialog(QDialog):
                         if px < target_width and py < target_height:
                             val = pixels[px, py]
                             pixel_val = val[0] if isinstance(val, (tuple, list)) else val
-                            if pixel_val < threshold:
+                            if algo == "dither":
+                                is_dot = (pixel_val == 0)
+                            else:
+                                is_dot = (pixel_val < threshold)
+                            if is_dot:
                                 code += w
                     line.append(chr(code))
                 lines.append(''.join(line))
                 
             self.generated_braille = '\n'.join(lines)
             self.txt_preview.setPlainText(self.generated_braille)
-            speak_nvda(f"แปลงภาพเป็นสื่อจุดเบรลล์สำเร็จ ความกว้าง {cols} เซลล์ {len(lines)} บรรทัด")
+            algo_txt = "Dithering" if algo == "dither" else "Threshold"
+            speak_nvda(f"แปลงภาพเป็นสื่อจุดเบรลล์สำเร็จ โหมด {algo_txt} ความกว้าง {cols} เซลล์ {len(lines)} บรรทัด")
         except Exception as e:
             QMessageBox.critical(self, "ข้อผิดพลาด", f"ไม่สามารถประมวลผลภาพได้: {e}")
+
+    def export_brf(self):
+        txt = self.txt_preview.toPlainText()
+        if not txt.strip():
+            QMessageBox.warning(self, "แจ้งเตือน", "ไม่มีข้อมูลจุดเบรลล์ให้ส่งออก กรุณาแปลงภาพก่อน")
+            return
+            
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "ส่งออกไฟล์ภาพนูนเบรลล์ (.BRF)",
+            "tactile_graphic.brf",
+            "Braille Formatted (*.brf);;All Files (*.*)"
+        )
+        if file_path:
+            try:
+                from tbtw_engine import ThaiBrailleTranslator
+                trans = ThaiBrailleTranslator()
+                ascii_payload = trans.to_ascii_braille(txt)
+                with open(file_path, 'w', encoding='ascii', errors='replace') as f:
+                    f.write(ascii_payload)
+                QMessageBox.information(self, "ส่งออกสำเร็จ", f"ส่งออกไฟล์ภาพนูนเบรลล์ (.BRF) สำเร็จ:\n{file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "ข้อผิดพลาด", f"ไม่สามารถส่งออกไฟล์ได้: {e}")
 
     def get_braille_text(self) -> str:
         return self.txt_preview.toPlainText()
@@ -1573,6 +1623,22 @@ class TBTWMainWindow(QMainWindow):
         self.line_length = 30
         self.page_length = 25
         self.total_page = 0
+        
+        # สร้าง Custom Tokenizer เพื่อรักษากลุ่มคำย่อระดับ 2 (CH78.tab, CH46.tab) ไม่ให้ถูกตัดแยกคำกลางคัน
+        self.thai_tokenizer = None
+        if pythainlp is not None:
+            try:
+                from pythainlp.tokenize import Tokenizer
+                from pythainlp.util import dict_trie
+                from pythainlp.corpus import thai_words
+                custom_words = set(thai_words())
+                if hasattr(self.translator, 'classic_ch78'):
+                    custom_words.update(self.translator.classic_ch78.keys())
+                if hasattr(self.translator, 'classic_ch46'):
+                    custom_words.update(self.translator.classic_ch46.keys())
+                self.thai_tokenizer = Tokenizer(custom_dict=dict_trie(custom_words), engine='newmm')
+            except Exception:
+                self.thai_tokenizer = None
         
         # โหลดค่าตั้งค่าหน้ากระดาษเดิมจาก SiamBraille.def
         try:
@@ -2555,7 +2621,12 @@ class TBTWMainWindow(QMainWindow):
                 
             # แยกคำภาษาไทยเพื่อให้ตัดบรรทัดตรงขอบคำพอดีเหมือน Delphi TBTW
             tokens = []
-            if pythainlp is not None:
+            if getattr(self, 'thai_tokenizer', None) is not None:
+                try:
+                    tokens = self.thai_tokenizer.word_tokenize(in_line)
+                except Exception:
+                    tokens = []
+            elif pythainlp is not None:
                 try:
                     tokens = pythainlp.word_tokenize(in_line, engine='newmm')
                 except Exception:
@@ -3124,7 +3195,7 @@ class TBTWMainWindow(QMainWindow):
                         QMessageBox.critical(self, "ข้อผิดพลาด", f"ไม่สามารถบันทึกไฟล์ได้: {e}")
                 return
                 
-            # กรณี 2: ส่งออกพอร์ต LPT
+            # กรณี 2: ส่งออกพอร์ตขนาน LPT
             if target in ("LPT1", "LPT2"):
                 try:
                     for _ in range(copies):
@@ -3136,6 +3207,20 @@ class TBTWMainWindow(QMainWindow):
                     QMessageBox.information(self, "สำเร็จ", msg)
                 except Exception as e:
                     QMessageBox.critical(self, "ข้อผิดพลาด", f"ไม่สามารถเปิดพอร์ต {target} ได้: {e}\n(หากไม่มีพอร์ต LPT จริง กรุณาเลือกเครื่องพิมพ์ในระบบ)")
+                return
+
+            # กรณี 2.1: ส่งออกพอร์ตสื่อสารซีเรียล / USB Virtual COM
+            if target.startswith("COM"):
+                try:
+                    for _ in range(copies):
+                        with open(f"\\\\.\\{target}", "wb", buffering=0) as f_com:
+                            f_com.write(payload_text.encode("ascii", errors="replace"))
+                    msg = f"ส่งข้อมูลเบรลล์ไปยังพอร์ต {target} สำเร็จ"
+                    self.set_status_message(msg)
+                    speak_nvda(msg)
+                    QMessageBox.information(self, "สำเร็จ", msg)
+                except Exception as e:
+                    QMessageBox.critical(self, "ข้อผิดพลาด", f"ไม่สามารถเปิดพอร์ต {target} ได้: {e}\n(หากไม่มีเครื่องต่อที่พอร์ต COM จริง กรุณาเลือกเครื่องพิมพ์ในระบบ)")
                 return
                 
             # กรณี 3: ส่งไปยังเครื่องพิมพ์ Windows (USB, SMB Network Share หรือ Generic / Text Only Driver)
