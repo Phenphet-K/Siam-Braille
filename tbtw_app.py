@@ -1,5 +1,5 @@
 """
-SiamBraille 3.0 - Professional Thai Braille Translation Software
+SiamBraille 1.0 - Professional Thai Braille Translation Software
 โปรแกรมแปลเอกสารเป็นอักษรเบรลล์ภาษาไทยและสากล
 พัฒนาด้วย Python 3 + PyQt6 รองรับ Windows 10/11 ทั้ง 32-bit และ 64-bit
 
@@ -17,20 +17,23 @@ import sys
 import os
 import ctypes
 import base64
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Any, TYPE_CHECKING
+if TYPE_CHECKING:
+    from lan_companion import LANCompanionServer
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QPlainTextEdit, QLabel, QToolBar, QStatusBar,
     QFileDialog, QMessageBox, QDialog, QFormLayout, QSpinBox,
     QPushButton, QFontDialog, QFrame, QStyleFactory, QToolButton,
-    QCheckBox, QSizePolicy, QGroupBox, QRadioButton, QComboBox, QLineEdit
+    QCheckBox, QSizePolicy, QGroupBox, QRadioButton, QComboBox, QLineEdit,
+    QMenu
 )
 from PyQt6.QtGui import (
     QAction, QIcon, QFont, QKeySequence, QPainter, QColor, QPen,
     QActionGroup, QFontDatabase, QPixmap, QTextDocument,
     QPageSize, QPageLayout
 )
-from PyQt6.QtCore import Qt, QSize, QEvent, QRectF, QMarginsF
+from PyQt6.QtCore import Qt, QSize, QEvent, QRectF, QMarginsF, QTimer
 
 try:
     from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
@@ -89,6 +92,7 @@ def get_resource_path(rel_path: str) -> str:
             candidate_dirs.append(os.path.join(b, "assets", "rules"))
             candidate_dirs.append(os.path.join(b, "assets", "fonts"))
             candidate_dirs.append(os.path.join(b, "assets", "icons"))
+            candidate_dirs.append(os.path.join(b, "logo"))
             candidate_dirs.append(os.path.join(b, "Tables"))
             candidate_dirs.append(os.path.join(b, "data"))
     
@@ -113,19 +117,45 @@ try:
                 _nvda_dll.nvdaController_testIfRunning.restype = ctypes.c_long
                 _nvda_dll.nvdaController_speakText.argtypes = [ctypes.c_wchar_p]
                 _nvda_dll.nvdaController_speakText.restype = ctypes.c_long
+                if hasattr(_nvda_dll, "nvdaController_cancelSpeech"):
+                    _nvda_dll.nvdaController_cancelSpeech.restype = ctypes.c_long
+                if hasattr(_nvda_dll, "nvdaController_brailleMessage"):
+                    _nvda_dll.nvdaController_brailleMessage.argtypes = [ctypes.c_wchar_p]
+                    _nvda_dll.nvdaController_brailleMessage.restype = ctypes.c_long
                 break
             except Exception:
                 _nvda_dll = None
 except Exception:
     _nvda_dll = None
 
-def speak_nvda(text: str):
-    """ส่งเสียงอ่านไปยัง NVDA Screen Reader ทันทีเมื่อโปรแกรมกำลังทำงาน"""
-    if _nvda_dll and _nvda_dll.nvdaController_testIfRunning() == 0:
+def is_nvda_running() -> bool:
+    """ตรวจสอบว่าโปรแกรมอ่านหน้าจอ NVDA กำลังทำงานอยู่หรือไม่"""
+    if _nvda_dll:
         try:
-            _nvda_dll.nvdaController_speakText(text)
+            return _nvda_dll.nvdaController_testIfRunning() == 0
         except Exception:
-            pass
+            return False
+    return False
+
+def speak_nvda(text: str, interrupt: bool = False, to_braille: bool = True):
+    """
+    ส่งเสียงอ่านและข้อความอักษรเบรลล์ไปยัง NVDA Screen Reader ทันทีเมื่อ NVDA กำลังทำงาน
+    - text: ข้อความที่จะอ่านออกเสียง
+    - interrupt: หากเป็น True จะตัดเสียงที่กำลังพูดอยู่ก่อนหน้าทันที (cancelSpeech)
+    - to_braille: ส่งข้อความไปยัง Refreshable Braille Display ด้วย (brailleMessage)
+    """
+    if not text or not _nvda_dll:
+        return
+    try:
+        if _nvda_dll.nvdaController_testIfRunning() == 0:
+            if interrupt and hasattr(_nvda_dll, "nvdaController_cancelSpeech"):
+                _nvda_dll.nvdaController_cancelSpeech()
+            _nvda_dll.nvdaController_speakText(text)
+            if to_braille and hasattr(_nvda_dll, "nvdaController_brailleMessage"):
+                _nvda_dll.nvdaController_brailleMessage(text)
+    except Exception:
+        pass
+
 
 
 def get_app_icon(name: str) -> QIcon:
@@ -141,7 +171,7 @@ def get_app_icon(name: str) -> QIcon:
 
 def get_main_app_icon() -> QIcon:
     """โหลดไอคอนหลักของโปรแกรม SiamBraille"""
-    for icon_name in ["SiamBraille.ico", "TBTW3.ico", "TBTW2.ico"]:
+    for icon_name in ["SiamBraille.ico", "icon64.ico", "icon128.ico", "siam-braille-logo.jpg", "TBTW3.ico", "TBTW2.ico"]:
         p = get_resource_path(icon_name)
         if os.path.exists(p):
             return QIcon(p)
@@ -234,7 +264,7 @@ class ReportTranslateDialog(QDialog):
         layout.setContentsMargins(20, 16, 20, 16)
         layout.setSpacing(8)
         
-        lbl_v = QLabel("SiamBraille 3.0")
+        lbl_v = QLabel("SiamBraille 1.0")
         lbl_v.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_v)
         
@@ -282,13 +312,31 @@ class ReportTranslateDialog(QDialog):
         layout.addLayout(btn_box)
 
 
+EMBOSSER_PROFILES = [
+    ("กำหนดเอง (Custom)", None, None),
+    ("มาตรฐาน TBTW ดั้งเดิม (30 เซลล์ x 25 บรรทัด)", 30, 25),
+    ("Index Braille - กระดาษ A4 (33 เซลล์ x 29 บรรทัด)", 33, 29),
+    ("Index Braille - กระดาษต่อเนื่อง 11.5x11 นิ้ว (40 เซลล์ x 25 บรรทัด)", 40, 25),
+    ("Index Braille - กระดาษต่อเนื่อง 11.5x11 นิ้ว เต็มหน้า (47 เซลล์ x 27 บรรทัด)", 47, 27),
+    ("Index Braille - กระดาษ Letter (36 เซลล์ x 27 บรรทัด)", 36, 27),
+    ("Index Braille - กระดาษ A3 (47 เซลล์ x 42 บรรทัด)", 47, 42),
+    ("Braillo 300/450 - กระดาษต่อเนื่อง 11.5x11 นิ้ว (42 เซลล์ x 27 บรรทัด)", 42, 27),
+    ("Braillo 300/450 - กระดาษ A4 (33 เซลล์ x 29 บรรทัด)", 33, 29),
+    ("Enabling Technologies Romeo/Juliet (40 เซลล์ x 25 บรรทัด)", 40, 25),
+    ("ViewPlus Columbia/Premier - กระดาษ A4 (33 เซลล์ x 29 บรรทัด)", 33, 29),
+    ("Nippon Telesoft Gemini - กระดาษ A4 (33 เซลล์ x 29 บรรทัด)", 33, 29),
+    ("Braille Display จอเบรลล์แบบรีเฟรชได้ (40 เซลล์ x 25 บรรทัด)", 40, 25),
+    ("Braille Display จอเบรลล์แบบรีเฟรชได้ (80 เซลล์ x 25 บรรทัด)", 80, 25),
+]
+
+
 class PageSettingDialog(QDialog):
-    """หน้าต่างตั้งค่าหน้ากระดาษการแปล (Braille Page Setting - Form2 ใน Delphi)"""
+    """หน้าต่างตั้งค่าหน้ากระดาษการแปล (Braille Page Setting - Form2 ใน Delphi) พร้อมโปรไฟล์เครื่องพิมพ์เบรลล์"""
     def __init__(self, parent: Optional[QWidget] = None, line_len: int = 30, page_len: int = 25):
         super().__init__(parent)
-        self.setWindowTitle("Braille Page Setting")
+        self.setWindowTitle("Braille Page Setting (ตั้งค่าหน้ากระดาษเบรลล์)")
         self.setAccessibleName("หน้าต่างตั้งค่าหน้ากระดาษการแปลเบรลล์ Braille Page Setting")
-        self.setFixedSize(360, 180)
+        self.setFixedSize(450, 230)
         self.setStyleSheet("""
             QDialog {
                 background-color: #f0f0f0;
@@ -309,7 +357,7 @@ class PageSettingDialog(QDialog):
                 border-color: #808080 #ffffff #ffffff #808080;
                 background-color: #d8d8d8;
             }
-            QSpinBox {
+            QSpinBox, QComboBox {
                 background-color: #ffffff;
                 border: 2px solid;
                 border-color: #808080 #ffffff #ffffff #808080;
@@ -324,6 +372,22 @@ class PageSettingDialog(QDialog):
         
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        
+        # 1. เลือกรุ่นเครื่องพิมพ์เบรลล์ / โปรไฟล์ขนาดกระดาษ
+        self.cbo_preset = QComboBox()
+        self.cbo_preset.setAccessibleName("เลือกโปรไฟล์เครื่องพิมพ์เบรลล์หรือขนาดกระดาษ")
+        self.cbo_preset.setAccessibleDescription("เลือกโปรไฟล์เครื่องพิมพ์เพื่อปรับขนาดเซลล์ต่อบรรทัดและบรรทัดต่อหน้าอัตโนมัติ")
+        matched_idx = 0
+        for idx, (p_name, p_cpl, p_lpp) in enumerate(EMBOSSER_PROFILES):
+            self.cbo_preset.addItem(p_name, (p_cpl, p_lpp))
+            if p_cpl == line_len and p_lpp == page_len and matched_idx == 0:
+                matched_idx = idx
+                
+        self.cbo_preset.setCurrentIndex(matched_idx)
+        self.cbo_preset.currentIndexChanged.connect(self._on_preset_changed)
+        lbl_preset = QLabel("โปรไฟล์ &Embosser :")
+        lbl_preset.setBuddy(self.cbo_preset)
+        form_layout.addRow(lbl_preset, self.cbo_preset)
         
         self.spin_line_len = QSpinBox()
         self.spin_line_len.setRange(10, 80)
@@ -366,6 +430,15 @@ class PageSettingDialog(QDialog):
         btn_layout.addWidget(btn_cancel)
         
         layout.addLayout(btn_layout)
+
+    def _on_preset_changed(self, index: int):
+        data = self.cbo_preset.currentData()
+        if data and data[0] is not None and data[1] is not None:
+            cpl, lpp = data
+            self.spin_line_len.setValue(cpl)
+            self.spin_page_len.setValue(lpp)
+            p_name = self.cbo_preset.currentText()
+            speak_nvda(f"เลือกโปรไฟล์ {p_name} กว้าง {cpl} เซลล์ {lpp} บรรทัด", interrupt=True)
 
     def get_settings(self) -> Tuple[int, int]:
         return self.spin_line_len.value(), self.spin_page_len.value()
@@ -477,7 +550,7 @@ class BraillePrintingDialog(QDialog):
         self.setWindowTitle("Printing Braille (ส่งพิมพ์อักษรเบรลล์)")
         self.setAccessibleName("หน้าต่างส่งพิมพ์อักษรเบรลล์ Form4")
         self.setWindowIcon(get_main_app_icon())
-        self.setFixedSize(480, 420)
+        self.setFixedSize(500, 460)
         self.total_pages = max(1, total_pages)
         self.setStyleSheet("""
             QDialog {
@@ -567,6 +640,18 @@ class BraillePrintingDialog(QDialog):
         self.cbo_printers.addItem("พอร์ตสื่อสารซีเรียล / USB Virtual: COM3", "COM3")
         self.cbo_printers.addItem("พอร์ตสื่อสารซีเรียล / USB Virtual: COM4", "COM4")
         port_layout.addWidget(self.cbo_printers)
+        
+        # ตัวเลือกโปรไฟล์เครื่องพิมพ์เป้าหมาย (Embosser Model Profile)
+        emb_row = QHBoxLayout()
+        lbl_emb = QLabel("รุ่นเครื่องพิมพ์ (&Model) :")
+        self.cbo_embosser = QComboBox()
+        self.cbo_embosser.setAccessibleName("เลือกรุ่นเครื่องพิมพ์เบรลล์เป้าหมาย")
+        for name, cpl, lpp in EMBOSSER_PROFILES:
+            self.cbo_embosser.addItem(name, (cpl, lpp))
+        lbl_emb.setBuddy(self.cbo_embosser)
+        emb_row.addWidget(lbl_emb)
+        emb_row.addWidget(self.cbo_embosser)
+        port_layout.addLayout(emb_row)
         layout.addWidget(port_box)
         
         # 3. โหมดพิมพ์ (Single side vs Double side)
@@ -650,6 +735,8 @@ class BraillePrintingDialog(QDialog):
         return {
             "target": target,
             "target_name": self.cbo_printers.currentText(),
+            "embosser_profile": self.cbo_embosser.currentText(),
+            "embosser_cpl_lpp": self.cbo_embosser.currentData(),
             "copies": copies,
             "is_double": is_double,
             "is_all": is_all,
@@ -903,6 +990,245 @@ class TactileGraphicsDialog(QDialog):
     def get_braille_text(self) -> str:
         return self.txt_preview.toPlainText()
 
+
+# ===========================================================================
+# ระบบแปลงข้อความเป็นเลขตำแหน่งจุดเบรลล์ 1-6 (Braille Dot Numbers Converter)
+# ===========================================================================
+
+ASCII_BRAILLE_TO_DOTS = {
+    ' ': ' ',
+    'a': '1', 'b': '12', 'c': '14', 'd': '145', 'e': '15',
+    'f': '124', 'g': '1245', 'h': '125', 'i': '24', 'j': '245',
+    'k': '13', 'l': '123', 'm': '134', 'n': '1345', 'o': '135',
+    'p': '1234', 'q': '12345', 'r': '1235', 's': '234', 't': '2345',
+    'u': '136', 'v': '1236', 'w': '2456', 'x': '1346', 'y': '13456', 'z': '1356',
+    '1': '1', '2': '12', '3': '14', '4': '145', '5': '15',
+    '6': '124', '7': '1245', '8': '125', '9': '24', '0': '245',
+    ',': '2', ';': '23', ':': '25', '.': '256', '!': '235',
+    '(': '2356', ')': '2356', '?': '236', '"': '356', '*': '35', '\'': '3',
+    '-': '36', '/': '34', '@': '4', '%': '146', '^': '45',
+    '+': '235', '=': '2356', '<': '126', '>': '345', '[': '246',
+    ']': '12456', '\\': '1256', '#': '3456'
+}
+
+DIGIT_TO_BRAILLE_DOTS = {
+    '1': '1', '2': '12', '3': '14', '4': '145', '5': '15',
+    '6': '124', '7': '1245', '8': '125', '9': '24', '0': '245',
+    '๑': '1', '๒': '12', '๓': '14', '๔': '145', '๕': '15',
+    '๖': '124', '๗': '1245', '๘': '125', '๙': '24', '๐': '245',
+}
+
+def unicode_braille_to_dots(ch: str) -> str:
+    code = ord(ch)
+    if 0x2800 <= code <= 0x28FF:
+        val = code - 0x2800
+        if val == 0:
+            return " "
+        dots = [str(i + 1) for i in range(8) if (val & (1 << i))]
+        return "".join(dots)
+    return ""
+
+def text_to_braille_dot_numbers(
+    text: str,
+    translator=None,
+    cell_sep: str = " ",
+    word_sep: str = "  ",
+    sep: Optional[str] = None,
+    include_number_sign: bool = False
+) -> str:
+    """
+    แปลงข้อความ (ไทย, อังกฤษ, ตัวเลข หรืออักษรเบรลล์) เป็นเลขระบุตำแหน่งจุดเบรลล์ 1-6
+    เช่น:
+      'ก' -> '1245'
+      'a' -> '1'
+      'b' -> '12'
+      'ab' -> '1 12'
+      '1' -> '1'  (หรือ '3456 1' หากเลือก include_number_sign=True)
+      '12' -> '1 12'
+      'ก ab 1' -> '1245  1 12  1'
+    """
+    if sep is not None:
+        cell_sep = sep
+    if not text:
+        return ""
+    output_lines = []
+    for line in text.split('\n'):
+        if not line:
+            output_lines.append("")
+            continue
+        words = line.split(' ')
+        converted_words = []
+        for word in words:
+            if not word:
+                continue
+            cells = []
+            in_number_run = False
+            for ch in word:
+                code = ord(ch)
+                # 1. รหัสเบรลล์ Unicode (U+2800 ถึง U+28FF)
+                if 0x2800 <= code <= 0x28FF:
+                    in_number_run = False
+                    d = unicode_braille_to_dots(ch)
+                    if d:
+                        cells.append(d)
+                    continue
+
+                # 2. ตัวเลขอารบิก (0-9) หรือเลขไทย (๐-๙)
+                if ch in DIGIT_TO_BRAILLE_DOTS:
+                    if include_number_sign and not in_number_run:
+                        cells.append('3456')  # เครื่องหมายนำเลข (#)
+                        in_number_run = True
+                    cells.append(DIGIT_TO_BRAILLE_DOTS[ch])
+                    continue
+                else:
+                    in_number_run = False
+
+                # 3. อักษรภาษาไทย
+                if '\u0e00' <= ch <= '\u0e7f':
+                    if translator:
+                        try:
+                            bu = translator.translate(ch)
+                            for bch in bu:
+                                d = unicode_braille_to_dots(bch)
+                                if d:
+                                    cells.append(d)
+                        except Exception:
+                            cells.append(ch)
+                    else:
+                        cells.append(ch)
+                    continue
+
+                # 4. อักษรภาษาอังกฤษ และสัญลักษณ์อื่นๆ
+                ch_low = ch.lower()
+                if ch_low in ASCII_BRAILLE_TO_DOTS:
+                    cells.append(ASCII_BRAILLE_TO_DOTS[ch_low])
+                else:
+                    cells.append(ch)
+            converted_words.append(cell_sep.join(cells))
+        output_lines.append(word_sep.join(converted_words))
+    return '\n'.join(output_lines)
+
+
+class BrailleDotConverterDialog(QDialog):
+    """
+    หน้าต่างแปลงเป็นเลขตำแหน่งจุดเบรลล์ (Braille Dot Numbers Converter: จุด 1 ถึง 6)
+    แปลงข้อความภาษาไทย, ภาษาอังกฤษ หรืออักษรเบรลล์ เป็นชุดเลขตำแหน่งจุด
+    เช่น ก -> 1245, a -> 1, b -> 12, ab -> 1 12
+    """
+    def __init__(self, parent=None, initial_text="", translator=None):
+        super().__init__(parent)
+        self.setWindowTitle("เครื่องมือแปลงเป็นเลขตำแหน่งจุดเบรลล์ (Braille Dot Numbers)")
+        self.setAccessibleName("หน้าต่างเครื่องมือแปลงเป็นเลขจุดเบรลล์ 1 ถึง 6")
+        self.setWindowIcon(get_main_app_icon())
+        self.resize(620, 440)
+        self.translator = translator
+        self.converted_text = ""
+
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #f0f0f0;
+                font-family: 'Tahoma', 'MS Sans Serif';
+                font-size: 11px;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #808080;
+                border-radius: 4px;
+                margin-top: 8px;
+                padding-top: 10px;
+                background-color: #fafafa;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 4px;
+            }
+            QPushButton {
+                background-color: #f0f0f0;
+                border: 2px solid;
+                border-color: #ffffff #808080 #808080 #ffffff;
+                padding: 4px 14px;
+                min-width: 80px;
+                font-size: 11px;
+            }
+            QPushButton:hover {
+                background-color: #e8e8e8;
+            }
+            QPushButton:pressed {
+                border-color: #808080 #ffffff #ffffff #808080;
+                background-color: #d8d8d8;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(10)
+
+        # Top Group: Input Text
+        grp_in = QGroupBox("ข้อความต้นฉบับ (ภาษาไทย / อังกฤษ / อักษรเบรลล์)")
+        lay_in = QVBoxLayout(grp_in)
+        self.txt_input = QPlainTextEdit()
+        self.txt_input.setFont(QFont("Tahoma", 11))
+        self.txt_input.setPlaceholderText("พิมพ์ข้อความที่ต้องการตรวจเลขจุด เช่น ก หรือ ab...")
+        self.txt_input.setAccessibleName("กล่องพิมพ์ข้อความต้นฉบับสำหรับแปลงเป็นเลขจุด")
+        lay_in.addWidget(self.txt_input)
+        layout.addWidget(grp_in)
+
+        # Option: Number sign
+        self.chk_number_sign = QCheckBox("ใส่เครื่องหมายนำเลขเบรลล์ (# = จุด 3456) นำหน้าตัวเลข")
+        self.chk_number_sign.setFont(QFont("Tahoma", 10))
+        self.chk_number_sign.setChecked(False)
+        self.chk_number_sign.setAccessibleName("เลือกเพื่อให้ใส่เครื่องหมายนำเลขเบรลล์ จุด 3456 นำหน้าตัวเลข")
+        self.chk_number_sign.toggled.connect(self.on_input_changed)
+        layout.addWidget(self.chk_number_sign)
+
+        # Bottom Group: Converted Dot Numbers
+        grp_out = QGroupBox("เลขตำแหน่งจุดเบรลล์ 1-6 (เช่น ก = 1245, a = 1, b = 12, 1 = 1)")
+        lay_out = QVBoxLayout(grp_out)
+        self.txt_output = QPlainTextEdit()
+        self.txt_output.setReadOnly(True)
+        self.txt_output.setFont(QFont("Consolas", 12))
+        self.txt_output.setStyleSheet("background-color: #ffffff; color: #000080; font-weight: bold;")
+        self.txt_output.setAccessibleName("กล่องแสดงผลลัพธ์เลขตำแหน่งจุดเบรลล์")
+        lay_out.addWidget(self.txt_output)
+        layout.addWidget(grp_out)
+
+        # Action Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_copy = QPushButton("📋 คัดลอกเลขจุด")
+        self.btn_copy.clicked.connect(self.copy_result)
+        self.btn_insert = QPushButton("📥 แทรกในเอกสาร")
+        self.btn_insert.clicked.connect(self.accept)
+        self.btn_close = QPushButton("❌ ปิด")
+        self.btn_close.clicked.connect(self.reject)
+
+        btn_layout.addWidget(self.btn_copy)
+        btn_layout.addWidget(self.btn_insert)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.btn_close)
+        layout.addLayout(btn_layout)
+
+        self.txt_input.textChanged.connect(self.on_input_changed)
+        if initial_text:
+            self.txt_input.setPlainText(initial_text)
+
+    def on_input_changed(self):
+        text = self.txt_input.toPlainText()
+        inc_sign = self.chk_number_sign.isChecked() if hasattr(self, 'chk_number_sign') else False
+        res = text_to_braille_dot_numbers(text, self.translator, sep=" ", include_number_sign=inc_sign)
+        self.txt_output.setPlainText(res)
+        self.converted_text = res
+
+    def copy_result(self):
+        txt = self.txt_output.toPlainText()
+        if txt:
+            QApplication.clipboard().setText(txt)
+            speak_nvda("คัดลอกเลขตำแหน่งจุดเบรลล์เรียบร้อยแล้ว")
+
+    def get_result(self):
+        return self.converted_text
+
+
 def crc16_ibm(data: str) -> str:
     crc = 0xFFFF
     for ch in data:
@@ -933,6 +1259,94 @@ def generate_promptpay_payload(target_id: str, amount: float = 0.0) -> str:
     return payload + crc16_ibm(payload)
 
 
+class TrialExpiredDialog(QDialog):
+    """หน้าต่างแจ้งเตือนเมื่อระยะเวลาทดลองใช้ฟรี 14 วันสิ้นสุดลง"""
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setWindowTitle("ระยะเวลาทดลองใช้ฟรีสิ้นสุดแล้ว - SiamBraille 1.0")
+        self.setAccessibleName("หน้าต่างแจ้งเตือนระยะเวลาทดลองใช้ฟรี 14 วันสิ้นสุดลงแล้ว")
+        self.setAccessibleDescription("ท่านได้ใช้งานครบกำหนดทดลองใช้ฟรี 14 วันแล้ว กรุณาสั่งซื้อหรือเปิดใช้งานลิขสิทธิ์")
+        self.setWindowIcon(get_main_app_icon())
+        self.setFixedSize(540, 360)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #f8fafc;
+                font-family: 'Tahoma', 'Segoe UI', sans-serif;
+            }
+            QPushButton {
+                font-weight: bold;
+                padding: 8px 16px;
+                border-radius: 6px;
+                min-height: 38px;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 18, 20, 18)
+        layout.setSpacing(12)
+
+        lbl_title = QLabel("⏳ ระยะเวลาทดลองใช้ฟรี 14 วันสิ้นสุดลงแล้ว")
+        lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #dc2626;")
+        layout.addWidget(lbl_title)
+
+        hwid = license_guard.global_license_manager.hwid
+        lbl_msg = QLabel(
+            "ขอขอบคุณที่ทดลองใช้งาน <b>SiamBraille 1.0</b><br>"
+            f"คอมพิวเตอร์เครื่องนี้ (รหัส HWID: <code>{hwid}</code>) ได้ใช้งานครบกำหนดสิทธิ์ทดลองใช้ฟรี 14 วันแล้ว<br><br>"
+            "เพื่อใช้งานฟังก์ชันการแปลเอกสาร บันทึก และพิมพ์อักษรเบรลล์ต่ออย่างต่อเนื่อง "
+            "กรุณาเลือกดำเนินการด้านล่างนี้ครับ:"
+        )
+        lbl_msg.setWordWrap(True)
+        lbl_msg.setStyleSheet("color: #334155; font-size: 12px; line-height: 1.4;")
+        layout.addWidget(lbl_msg)
+
+        btn_box = QVBoxLayout()
+        btn_box.setSpacing(10)
+
+        self.btn_buy = QPushButton("💳 1. สั่งซื้อลิขสิทธิ์ผ่านไทยพร้อมเพย์ (PromptPay QR)... (&B)")
+        self.btn_buy.setShortcut(QKeySequence("Alt+B"))
+        self.btn_buy.setStyleSheet("background-color: #0284c7; color: #ffffff; border: none; font-size: 13px;")
+        self.btn_buy.clicked.connect(self.open_buy_dialog)
+        btn_box.addWidget(self.btn_buy)
+
+        self.btn_activate = QPushButton("🔑 2. มีรหัสคีย์แล้ว? เปิดใช้งานลิขสิทธิ์ทันที (&A)")
+        self.btn_activate.setShortcut(QKeySequence("Alt+A"))
+        self.btn_activate.setStyleSheet("background-color: #16a34a; color: #ffffff; border: none; font-size: 13px;")
+        self.btn_activate.clicked.connect(self.open_activate_dialog)
+        btn_box.addWidget(self.btn_activate)
+
+        layout.addLayout(btn_box)
+        layout.addStretch()
+
+        bot_box = QHBoxLayout()
+        bot_box.addStretch()
+        btn_close = QPushButton("ปิด (&X)")
+        btn_close.setShortcut(QKeySequence("Alt+X"))
+        btn_close.setStyleSheet("background-color: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1;")
+        btn_close.clicked.connect(self.accept)
+        bot_box.addWidget(btn_close)
+        layout.addLayout(bot_box)
+
+    def open_buy_dialog(self):
+        self.accept()
+        dlg = LicensePurchaseDialog(self.parentWidget())
+        dlg.exec()
+
+    def open_activate_dialog(self):
+        self.accept()
+        dlg = LicenseActivationDialog(self.parentWidget())
+        dlg.exec()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.btn_buy.setFocus()
+        speak_nvda("ระยะเวลาทดลองใช้ฟรี 14 วันของเครื่องนี้สิ้นสุดแล้ว กรุณาสั่งซื้อหรือเปิดใช้งานลิขสิทธิ์ กด Alt+B เพื่อสั่งซื้อ หรือ Alt+A เพื่อเปิดใช้งานด้วยรหัสคีย์")
+
+
 class LicenseActivationDialog(QDialog):
     """หน้าต่างเปิดใช้งานรหัสลิขสิทธิ์ SiamBraille โดยไม่ต้องคัดลอกไฟล์"""
     def __init__(self, parent: Optional[QWidget] = None):
@@ -940,7 +1354,7 @@ class LicenseActivationDialog(QDialog):
         self.setWindowTitle("เปิดใช้งานลิขสิทธิ์ - SiamBraille 1.0")
         self.setAccessibleName("หน้าต่างเปิดใช้งานรหัสลิขสิทธิ์โปรแกรม SiamBraille")
         self.setWindowIcon(get_main_app_icon())
-        self.setFixedSize(540, 360)
+        self.setFixedSize(480, 290)
         self.setStyleSheet("""
             QDialog {
                 background-color: #f8fafc;
@@ -952,9 +1366,10 @@ class LicenseActivationDialog(QDialog):
                 color: #ffffff;
                 border: 1px solid #0369a1;
                 border-radius: 4px;
-                padding: 6px 16px;
+                padding: 4px 12px;
                 font-weight: bold;
-                min-height: 26px;
+                font-size: 10.5px;
+                min-height: 24px;
             }
             QPushButton:hover {
                 background-color: #0369a1;
@@ -971,23 +1386,23 @@ class LicenseActivationDialog(QDialog):
                 background-color: #ffffff;
                 border: 1px solid #94a3b8;
                 border-radius: 4px;
-                padding: 6px 10px;
+                padding: 4px 8px;
                 font-family: 'Consolas', monospace;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: bold;
                 color: #0f172a;
             }
             QLineEdit:focus {
-                border: 2px solid #0284c7;
+                border: 1.5px solid #0284c7;
             }
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 18)
-        layout.setSpacing(12)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
 
         lbl_title = QLabel("<b>🔑 เปิดใช้งานรหัสลิขสิทธิ์ SiamBraille 1.0</b>")
-        lbl_title.setStyleSheet("font-size: 15px; color: #0369a1;")
+        lbl_title.setStyleSheet("font-size: 13.5px; color: #0369a1;")
         layout.addWidget(lbl_title)
 
         lbl_desc = QLabel(
@@ -995,17 +1410,18 @@ class LicenseActivationDialog(QDialog):
             "ระบบจะเปิดใช้งานและผูกกับเครื่องนี้โดยอัตโนมัติ โดยไม่ต้องดาวน์โหลดหรือคัดลอกไฟล์ใดๆ"
         )
         lbl_desc.setWordWrap(True)
-        lbl_desc.setStyleSheet("color: #475569; font-size: 11px; line-height: 1.4;")
+        lbl_desc.setStyleSheet("color: #475569; font-size: 10.5px; line-height: 1.3;")
         layout.addWidget(lbl_desc)
 
         # HWID Box
         hwid_layout = QHBoxLayout()
         hwid = license_guard.global_license_manager.hwid
-        lbl_hwid = QLabel(f"<b>รหัสเครื่องนี้ (HWID):</b> <span style='font-family: Consolas; color: #0284c7;'>{hwid}</span>")
+        lbl_hwid = QLabel(f"<b>รหัสเครื่องนี้ (HWID):</b> <span style='font-family: Consolas; color: #0284c7; font-size: 11px;'>{hwid}</span>")
         hwid_layout.addWidget(lbl_hwid)
         btn_copy_hwid = QPushButton("📋 คัดลอก")
         btn_copy_hwid.setObjectName("btnCancel")
-        btn_copy_hwid.setFixedWidth(75)
+        btn_copy_hwid.setFixedWidth(60)
+        btn_copy_hwid.setStyleSheet("font-size: 10px; padding: 2px 6px; min-height: 22px;")
         btn_copy_hwid.clicked.connect(lambda: self.copy_to_clipboard(hwid, "คัดลอกรหัส HWID แล้ว"))
         hwid_layout.addWidget(btn_copy_hwid)
         layout.addLayout(hwid_layout)
@@ -1019,7 +1435,7 @@ class LicenseActivationDialog(QDialog):
 
         # Status Label
         self.lbl_status = QLabel("")
-        self.lbl_status.setStyleSheet("font-size: 11px; font-weight: bold;")
+        self.lbl_status.setStyleSheet("font-size: 10.5px; font-weight: bold;")
         layout.addWidget(self.lbl_status)
 
         layout.addStretch()
@@ -1055,7 +1471,7 @@ class LicenseActivationDialog(QDialog):
 
     def open_buy_dialog(self):
         self.reject()
-        dlg = LicensePurchaseDialog(self.parent())
+        dlg = LicensePurchaseDialog(self.parentWidget())
         dlg.exec()
 
     def do_activate(self):
@@ -1075,8 +1491,9 @@ class LicenseActivationDialog(QDialog):
         if ok:
             speak_nvda("เปิดใช้งานลิขสิทธิ์ SiamBraille 1.0 สำเร็จเรียบร้อยแล้ว")
             QMessageBox.information(self, "เปิดใช้งานสำเร็จ", msg)
-            if self.parent() and hasattr(self.parent(), "update_license_ui"):
-                self.parent().update_license_ui()
+            parent = self.parentWidget()
+            if parent is not None and hasattr(parent, "update_license_ui"):
+                getattr(parent, "update_license_ui")()
             self.accept()
         else:
             speak_nvda(f"ข้อผิดพลาด: {msg}")
@@ -1092,21 +1509,22 @@ class LicensePurchaseDialog(QDialog):
         self.setWindowTitle("สั่งซื้อลิขสิทธิ์ SiamBraille 1.0 (PromptPay)")
         self.setAccessibleName("หน้าต่างสั่งซื้อลิขสิทธิ์ SiamBraille ผ่านระบบพร้อมเพย์")
         self.setWindowIcon(get_main_app_icon())
-        self.setFixedSize(580, 560)
+        self.setFixedSize(500, 465)
         self.setStyleSheet("""
             QDialog {
                 background-color: #f8fafc;
                 font-family: 'Tahoma', 'Segoe UI', sans-serif;
-                font-size: 11px;
+                font-size: 10.5px;
             }
             QPushButton {
                 background-color: #0284c7;
                 color: #ffffff;
                 border: 1px solid #0369a1;
                 border-radius: 4px;
-                padding: 6px 14px;
+                padding: 4px 10px;
                 font-weight: bold;
-                min-height: 26px;
+                font-size: 10.5px;
+                min-height: 24px;
             }
             QPushButton:hover {
                 background-color: #0369a1;
@@ -1122,9 +1540,10 @@ class LicensePurchaseDialog(QDialog):
             QGroupBox {
                 border: 1px solid #cbd5e1;
                 border-radius: 6px;
-                margin-top: 8px;
-                padding-top: 14px;
+                margin-top: 6px;
+                padding-top: 10px;
                 font-weight: bold;
+                font-size: 10.5px;
                 color: #1e293b;
             }
             QGroupBox::title {
@@ -1132,14 +1551,17 @@ class LicensePurchaseDialog(QDialog):
                 left: 10px;
                 padding: 0 4px;
             }
+            QRadioButton {
+                font-size: 10.5px;
+            }
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
 
         lbl_title = QLabel("<b>💳 สั่งซื้อลิขสิทธิ์ SiamBraille 1.0 ผ่านไทยพร้อมเพย์</b>")
-        lbl_title.setStyleSheet("font-size: 15px; color: #0369a1;")
+        lbl_title.setStyleSheet("font-size: 13.5px; color: #0369a1;")
         layout.addWidget(lbl_title)
 
         # Plan Selection
@@ -1161,28 +1583,29 @@ class LicensePurchaseDialog(QDialog):
 
         # Left: QR Code Box
         self.lbl_qr = QLabel()
-        self.lbl_qr.setFixedSize(180, 180)
+        self.lbl_qr.setFixedSize(125, 125)
         self.lbl_qr.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_qr.setStyleSheet("background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;")
         pay_layout.addWidget(self.lbl_qr)
 
         # Right: Payment Info
         info_layout = QVBoxLayout()
-        info_layout.setSpacing(6)
+        info_layout.setSpacing(4)
 
-        self.lbl_price_display = QLabel("<b>ยอดชำระ:</b> <span style='font-size: 18px; color: #0284c7;'>1,290.00 บาท</span>")
+        self.lbl_price_display = QLabel("<b>ยอดชำระ:</b> <span style='font-size: 14.5px; color: #0284c7;'>1,290.00 บาท</span>")
         info_layout.addWidget(self.lbl_price_display)
 
         lbl_acc = QLabel("<b>ชื่อบัญชี:</b> สยามเบรลล์ ซอฟต์แวร์ (SiamBraille)")
+        lbl_acc.setStyleSheet("font-size: 10px;")
         info_layout.addWidget(lbl_acc)
 
         pp_box = QHBoxLayout()
         self.pp_target = "0819999999"
-        lbl_pp = QLabel(f"<b>พร้อมเพย์:</b> <span style='font-family: Consolas;'>{self.pp_target}</span>")
+        lbl_pp = QLabel(f"<b>พร้อมเพย์:</b> <span style='font-family: Consolas; font-size: 11px;'>{self.pp_target}</span>")
         pp_box.addWidget(lbl_pp)
         btn_copy_pp = QPushButton("📋 คัดลอก")
         btn_copy_pp.setObjectName("btnSecondary")
-        btn_copy_pp.setFixedWidth(70)
+        btn_copy_pp.setFixedWidth(60)
         btn_copy_pp.clicked.connect(lambda: self.copy_to_clipboard(self.pp_target, "คัดลอกหมายเลขพร้อมเพย์แล้ว"))
         pp_box.addWidget(btn_copy_pp)
         info_layout.addLayout(pp_box)
@@ -1191,7 +1614,7 @@ class LicensePurchaseDialog(QDialog):
             "⚡ เมื่อโอนเงินแล้ว ท่านสามารถเปิดหน้าเว็บเพื่อส่งสลิปตรวจ Mini QR หรือติดต่อผู้ดูแลเพื่อรับ License Key ทันที"
         )
         lbl_notice.setWordWrap(True)
-        lbl_notice.setStyleSheet("color: #64748b; font-size: 10px; line-height: 1.3;")
+        lbl_notice.setStyleSheet("color: #64748b; font-size: 9.5px; line-height: 1.2;")
         info_layout.addWidget(lbl_notice)
 
         pay_layout.addLayout(info_layout)
@@ -1224,16 +1647,16 @@ class LicensePurchaseDialog(QDialog):
 
     def update_qr(self):
         amount = 1290.0 if self.rb_personal.isChecked() else 4900.0
-        self.lbl_price_display.setText(f"<b>ยอดชำระ:</b> <span style='font-size: 18px; color: #0284c7;'>{amount:,.2f} บาท</span>")
+        self.lbl_price_display.setText(f"<b>ยอดชำระ:</b> <span style='font-size: 14.5px; color: #0284c7;'>{amount:,.2f} บาท</span>")
         if qrcode:
             try:
                 pp_payload = generate_promptpay_payload(self.pp_target, amount)
                 img = qrcode.make(pp_payload)
                 buf = io.BytesIO()
-                img.save(buf, format="PNG")
+                img.save(buf)
                 pix = QPixmap()
                 pix.loadFromData(buf.getvalue())
-                self.lbl_qr.setPixmap(pix.scaled(170, 170, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+                self.lbl_qr.setPixmap(pix.scaled(118, 118, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
             except Exception:
                 self.lbl_qr.setText("PromptPay QR")
         else:
@@ -1247,7 +1670,7 @@ class LicensePurchaseDialog(QDialog):
 
     def open_activate_dialog(self):
         self.reject()
-        dlg = LicenseActivationDialog(self.parent())
+        dlg = LicenseActivationDialog(self.parentWidget())
         dlg.exec()
 
 
@@ -1258,21 +1681,22 @@ class CheckUpdateDialog(QDialog):
         self.setWindowTitle("ตรวจสอบการอัปเดต - SiamBraille 1.0")
         self.setAccessibleName("หน้าต่างตรวจสอบการอัปเดตซอฟต์แวร์ SiamBraille")
         self.setWindowIcon(get_main_app_icon())
-        self.setFixedSize(540, 420)
+        self.setFixedSize(490, 380)
         self.setStyleSheet("""
             QDialog {
                 background-color: #f8fafc;
                 font-family: 'Tahoma', 'Segoe UI', sans-serif;
-                font-size: 11px;
+                font-size: 10.5px;
             }
             QPushButton {
                 background-color: #0284c7;
                 color: #ffffff;
                 border: 1px solid #0369a1;
                 border-radius: 4px;
-                padding: 6px 14px;
+                padding: 4px 10px;
                 font-weight: bold;
-                min-height: 26px;
+                font-size: 10.5px;
+                min-height: 24px;
             }
             QPushButton:hover {
                 background-color: #0369a1;
@@ -1289,23 +1713,23 @@ class CheckUpdateDialog(QDialog):
                 background-color: #ffffff;
                 border: 1px solid #cbd5e1;
                 border-radius: 4px;
-                padding: 8px;
+                padding: 6px;
                 font-family: 'Tahoma', 'Segoe UI';
-                font-size: 11px;
+                font-size: 10px;
                 color: #1e293b;
             }
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
 
         lbl_title = QLabel("<b>🔄 ระบบตรวจสอบการอัปเดต SiamBraille</b>")
-        lbl_title.setStyleSheet("font-size: 15px; color: #0369a1;")
+        lbl_title.setStyleSheet("font-size: 13.5px; color: #0369a1;")
         layout.addWidget(lbl_title)
 
         self.lbl_ver_status = QLabel("กำลังเชื่อมต่อเซิร์ฟเวอร์เพื่อตรวจสอบเวอร์ชันล่าสุด...")
-        self.lbl_ver_status.setStyleSheet("font-size: 12px; font-weight: bold; color: #0f172a;")
+        self.lbl_ver_status.setStyleSheet("font-size: 11px; font-weight: bold; color: #0f172a;")
         layout.addWidget(self.lbl_ver_status)
 
         layout.addWidget(QLabel("<b>รายการปรับปรุงและแพตช์แก้ไขข้อผิดพลาด (Changelog):</b>"))
@@ -1380,7 +1804,7 @@ class AboutBoxDialog(QDialog):
         self.setWindowTitle("About SiamBraille 1.0 Professional Edition")
         self.setAccessibleName("หน้าต่างเกี่ยวกับโปรแกรม SiamBraille 1.0 และสถานะลิขสิทธิ์")
         self.setWindowIcon(get_main_app_icon())
-        self.setFixedSize(650, 580)
+        self.setFixedSize(530, 465)
         self.setStyleSheet("""
             QDialog {
                 background-color: #f8fafc;
@@ -1392,9 +1816,10 @@ class AboutBoxDialog(QDialog):
                 color: #ffffff;
                 border: 1px solid #0369a1;
                 border-radius: 4px;
-                padding: 6px 14px;
+                padding: 4px 10px;
                 font-weight: bold;
-                min-height: 25px;
+                font-size: 10.5px;
+                min-height: 24px;
             }
             QPushButton:hover {
                 background-color: #0369a1;
@@ -1410,38 +1835,50 @@ class AboutBoxDialog(QDialog):
             QGroupBox {
                 border: 1px solid #cbd5e1;
                 border-radius: 6px;
-                margin-top: 8px;
-                padding-top: 12px;
+                margin-top: 6px;
+                padding-top: 10px;
                 font-weight: bold;
+                font-size: 11px;
                 color: #1e293b;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 10px;
+                left: 8px;
                 padding: 0 4px;
             }
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 16, 18, 14)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
 
         # Header: Logo + App Info
         top_layout = QHBoxLayout()
-        top_layout.setSpacing(14)
+        top_layout.setSpacing(12)
 
         logo_frame = QFrame()
-        logo_frame.setStyleSheet("background-color: #0b192c; border: 2px solid #0284c7; border-radius: 6px;")
-        logo_frame.setFixedSize(96, 96)
+        logo_frame.setStyleSheet("background-color: #0b192c; border: 1.5px solid #0284c7; border-radius: 6px;")
+        logo_frame.setFixedSize(68, 68)
 
         lbl_img = QLabel(logo_frame)
-        lbl_img.setGeometry(2, 2, 92, 92)
+        lbl_img.setGeometry(2, 2, 64, 64)
         lbl_img.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_img.setAccessibleName("โลโก้สัญลักษณ์ SiamBraille 1.0")
 
-        logo_jpg = get_resource_path(os.path.join("logo", "tbtw_icon.jpg"))
-        if os.path.exists(logo_jpg):
-            pix = QPixmap(logo_jpg).scaled(92, 92, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        logo_file = None
+        for cand in [
+            os.path.join("logo", "siam-braille-logo.jpg"),
+            "siam-braille-logo.jpg",
+            "SiamBraille.ico",
+            os.path.join("assets", "icons", "SiamBraille.ico")
+        ]:
+            p = get_resource_path(cand)
+            if os.path.exists(p):
+                logo_file = p
+                break
+
+        if logo_file:
+            pix = QPixmap(logo_file).scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             lbl_img.setPixmap(pix)
         else:
             lbl_img.setText("SiamBraille")
@@ -1449,14 +1886,14 @@ class AboutBoxDialog(QDialog):
         top_layout.addWidget(logo_frame)
 
         header_layout = QVBoxLayout()
-        header_layout.setSpacing(3)
+        header_layout.setSpacing(2)
 
         lbl_title = QLabel("<b>SiamBraille 1.0</b>")
-        lbl_title.setStyleSheet("font-size: 18px; color: #000080; font-family: 'Tahoma';")
+        lbl_title.setStyleSheet("font-size: 14.5px; color: #000080; font-family: 'Tahoma';")
         header_layout.addWidget(lbl_title)
 
         lbl_ver = QLabel("<b>Professional Edition (Version 1.0.0 — Build 2026)</b>")
-        lbl_ver.setStyleSheet("font-size: 12px; color: #0f172a;")
+        lbl_ver.setStyleSheet("font-size: 11px; color: #0f172a;")
         header_layout.addWidget(lbl_ver)
 
         lbl_desc = QLabel(
@@ -1464,7 +1901,7 @@ class AboutBoxDialog(QDialog):
             "ตามคู่มือมาตรฐานการใช้อักษรเบรลล์ในประเทศไทย ฉบับปรับปรุง พ.ศ. 2564<br>"
             "รองรับการล็อก 30 เซลล์ x 25 บรรทัด และจัดเลขหน้าอัตโนมัติ"
         )
-        lbl_desc.setStyleSheet("color: #475569; font-size: 11px; line-height: 1.3;")
+        lbl_desc.setStyleSheet("color: #475569; font-size: 10px; line-height: 1.25;")
         header_layout.addWidget(lbl_desc)
 
         top_layout.addLayout(header_layout)
@@ -1479,8 +1916,8 @@ class AboutBoxDialog(QDialog):
 
         grp_lic = QGroupBox("สถานะลิขสิทธิ์และการลงทะเบียน (License Status)")
         lic_form = QFormLayout(grp_lic)
-        lic_form.setSpacing(6)
-        lic_form.setContentsMargins(12, 10, 12, 10)
+        lic_form.setSpacing(4)
+        lic_form.setContentsMargins(10, 8, 10, 8)
 
         # Status
         if is_lic:
@@ -1494,12 +1931,13 @@ class AboutBoxDialog(QDialog):
         # Key
         key_str = info.get("key", "ยังไม่มีรหัสคีย์ (กรุณาลงทะเบียน)")
         key_box = QHBoxLayout()
-        lbl_key_val = QLabel(f"<span style='font-family: Consolas; font-weight: bold; color: #0284c7;'>{key_str}</span>")
+        lbl_key_val = QLabel(f"<span style='font-family: Consolas; font-weight: bold; color: #0284c7; font-size: 11px;'>{key_str}</span>")
         key_box.addWidget(lbl_key_val)
         if is_lic and info.get("key"):
             btn_copy_key = QPushButton("📋 คัดลอก")
             btn_copy_key.setObjectName("btnSecondary")
-            btn_copy_key.setFixedWidth(65)
+            btn_copy_key.setFixedWidth(58)
+            btn_copy_key.setStyleSheet("font-size: 10px; padding: 2px 6px; min-height: 20px;")
             btn_copy_key.clicked.connect(lambda: self.copy_text(key_str, "คัดลอกรหัสลิขสิทธิ์แล้ว"))
             key_box.addWidget(btn_copy_key)
         key_box.addStretch()
@@ -1508,17 +1946,18 @@ class AboutBoxDialog(QDialog):
         # Owner
         owner_str = info.get("owner", "ผู้ใช้งานทั่วไป (Unregistered)")
         org_str = f" ({info.get('org')})" if info.get("org") else ""
-        lbl_owner_val = QLabel(f"{owner_str}{org_str}")
+        lbl_owner_val = QLabel(f"<span style='font-size: 10.5px;'>{owner_str}{org_str}</span>")
         lic_form.addRow("<b>ผู้ถือลิขสิทธิ์:</b>", lbl_owner_val)
 
         # HWID
         hwid_str = mgr.hwid
         hwid_box = QHBoxLayout()
-        lbl_hwid_val = QLabel(f"<span style='font-family: Consolas; color: #475569;'>{hwid_str}</span>")
+        lbl_hwid_val = QLabel(f"<span style='font-family: Consolas; color: #475569; font-size: 10.5px;'>{hwid_str}</span>")
         hwid_box.addWidget(lbl_hwid_val)
         btn_copy_hwid = QPushButton("📋 คัดลอก")
         btn_copy_hwid.setObjectName("btnSecondary")
-        btn_copy_hwid.setFixedWidth(65)
+        btn_copy_hwid.setFixedWidth(58)
+        btn_copy_hwid.setStyleSheet("font-size: 10px; padding: 2px 6px; min-height: 20px;")
         btn_copy_hwid.clicked.connect(lambda: self.copy_text(hwid_str, "คัดลอกรหัส HWID แล้ว"))
         hwid_box.addWidget(btn_copy_hwid)
         hwid_box.addStretch()
@@ -1531,7 +1970,7 @@ class AboutBoxDialog(QDialog):
             exp_str = datetime.datetime.fromtimestamp(exp_ts).strftime("%d/%m/%Y")
         else:
             exp_str = "ตลอดชีพ (ไม่มีวันหมดอายุ)" if is_lic else "14 วันนับจากติดตั้ง"
-        lbl_exp_val = QLabel(exp_str)
+        lbl_exp_val = QLabel(f"<span style='font-size: 10.5px;'>{exp_str}</span>")
         lic_form.addRow("<b>ระยะเวลาลิขสิทธิ์:</b>", lbl_exp_val)
 
         layout.addWidget(grp_lic)
@@ -1539,16 +1978,18 @@ class AboutBoxDialog(QDialog):
         # Specifications Memo
         self.memo = QPlainTextEdit()
         self.memo.setReadOnly(True)
+        self.memo.setFixedHeight(88)
         self.memo.setAccessibleName("คุณสมบัติและมาตรฐานระบบ SiamBraille")
         self.memo.setStyleSheet("""
             QPlainTextEdit {
                 background-color: #0b192c;
                 color: #e2e8f0;
                 font-family: 'Tahoma', 'Consolas';
-                font-size: 11px;
+                font-size: 10px;
                 border: 1px solid #1e293b;
                 border-radius: 4px;
-                padding: 6px;
+                padding: 4px;
+                line-height: 1.25;
             }
         """)
         memo_content = (
@@ -1565,7 +2006,7 @@ class AboutBoxDialog(QDialog):
 
         # Bottom Action Bar
         btn_bar = QHBoxLayout()
-        btn_bar.setSpacing(8)
+        btn_bar.setSpacing(6)
 
         btn_buy = QPushButton("💳 สั่งซื้อ License...")
         btn_buy.clicked.connect(self.open_buy)
@@ -1597,12 +2038,12 @@ class AboutBoxDialog(QDialog):
 
     def open_buy(self):
         self.reject()
-        dlg = LicensePurchaseDialog(self.parent())
+        dlg = LicensePurchaseDialog(self.parentWidget())
         dlg.exec()
 
     def open_activate(self):
         self.reject()
-        dlg = LicenseActivationDialog(self.parent())
+        dlg = LicenseActivationDialog(self.parentWidget())
         dlg.exec()
 
     def open_update(self):
@@ -1624,8 +2065,11 @@ class TBTWMainWindow(QMainWindow):
         self.page_length = 25
         self.total_page = 0
         
+        # เซิร์ฟเวอร์พิมพ์ระยะไกลผ่านมือถือในวง LAN
+        self.lan_server: Optional['LANCompanionServer'] = None
+
         # สร้าง Custom Tokenizer เพื่อรักษากลุ่มคำย่อระดับ 2 (CH78.tab, CH46.tab) ไม่ให้ถูกตัดแยกคำกลางคัน
-        self.thai_tokenizer = None
+        self.thai_tokenizer: Optional[Any] = None
         if pythainlp is not None:
             try:
                 from pythainlp.tokenize import Tokenizer
@@ -1682,27 +2126,59 @@ class TBTWMainWindow(QMainWindow):
         self.update_title()
         self.resize(1200, 750)
         self.setMinimumSize(640, 400)
+        self.showMaximized()
         self.setAccessibleName("SiamBraille 1.0 โปรแกรมแปลเอกสารเป็นอักษรเบรลล์")
         self.setAccessibleDescription(
             "หน้าต่างหลักของโปรแกรม มีกล่องข้อความภาษาไทยปกติทางซ้าย และกล่องอักษรเบรลล์ทางขวา "
             "กด F6 เพื่อสลับระหว่างสองกล่องข้อความ กด Ctrl+T เพื่อแปลเป็นอักษรเบรลล์"
         )
         
-        icon_path = os.path.join(os.path.dirname(__file__), "TBTW2.ico")
-        if os.path.exists(icon_path):
-            self.setWindowIcon(QIcon(icon_path))
+        app_icon = get_main_app_icon()
+        if not app_icon.isNull():
+            self.setWindowIcon(app_icon)
             
+        # Menu references
+        self.menu_file = None
+        self.menu_print = None
+        self.menu_edit = None
+        self.menu_default = None
+        self.menu_page_num = None
+        self.menu_printer_port = None
+        self.menu_print_mode = None
+        self.menu_page_adv = None
+        self.menu_set_font = None
+        self.menu_set_kb = None
+        self.menu_th_level = None
+        self.menu_en_level = None
+        self.menu_tools = None
+        self.menu_help = None
+
         self.setup_ui()
         self.setup_menubar()
         self.setup_toolbar()
         self.setup_statusbar()
         self.retranslate_ui()
+
+        # ตรวจสอบสิทธิ์ทดลองใช้เมื่อเปิดโปรแกรม หากหมดอายุให้เด้งหน้าแจ้งเตือนและชำระเงิน
+        mgr = license_guard.global_license_manager
+        if not mgr.is_licensed and getattr(mgr, "is_trial_expired", False):
+            QTimer.singleShot(600, self.show_trial_expired_dialog)
+        elif not mgr.is_licensed and getattr(mgr, "is_trial", False):
+            rem = getattr(mgr, "trial_days_remaining", 14)
+            day_num = getattr(mgr, "trial_day_number", 1)
+            QTimer.singleShot(700, lambda: speak_nvda(f"ยินดีต้อนรับสู่ SiamBraille 1.0 สิทธิ์ทดลองใช้ฟรีวันที่ {day_num} จาก 14 วัน เหลืออีก {rem} วัน"))
         
     def update_title(self):
         mgr = license_guard.global_license_manager
-        lic_tag = ""
-        if not mgr.is_licensed:
-            lic_tag = " [ทดลองใช้]" if getattr(self, "current_lang", "th") == "th" else " [Trial]"
+        is_th = getattr(self, "current_lang", "th") == "th"
+        if mgr.is_licensed:
+            lic_tag = ""
+        elif getattr(mgr, "is_trial", False) and not getattr(mgr, "is_trial_expired", False):
+            rem = getattr(mgr, "trial_days_remaining", 14)
+            day_num = getattr(mgr, "trial_day_number", 1)
+            lic_tag = f" [ทดลองใช้วันที่ {day_num}/14 (เหลือ {rem} วัน)]" if is_th else f" [Trial Day {day_num}/14 ({rem} days left)]"
+        else:
+            lic_tag = " [หมดอายุทดลองใช้]" if is_th else " [Trial Expired]"
         self.setWindowTitle(f"SiamBraille 1.0{lic_tag} - ({self.current_filename})")
 
     def setup_ui(self):
@@ -1754,33 +2230,11 @@ class TBTWMainWindow(QMainWindow):
         self.txt_normal.textChanged.connect(self.on_text_changed)
         self.txt_normal.installEventFilter(self)
         
-        # --- Right Panel: Dual Column matching Delphi (RichEdit3 + RichEdit2) ---
-        right_container = QWidget()
-        right_layout = QHBoxLayout(right_container)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(0)
-        
-        # Left column of right pane: Thai line reference (RichEdit3 in Delphi)
+        # Keep txt_braille_thai instantiated in background so any legacy references work seamlessly
         self.txt_braille_thai = QPlainTextEdit()
-        self.txt_braille_thai.setFont(QFont("AngsanaUPC", 16) if "AngsanaUPC" in QFontDatabase.families() else QFont("Tahoma", 11))
-        self.txt_braille_thai.setReadOnly(True)
-        self.txt_braille_thai.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.txt_braille_thai.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.txt_braille_thai.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        self.txt_braille_thai.setAccessibleName("แถบข้อความภาษาไทยอ้างอิงเทียบเคียงเบรลล์")
-        self.txt_braille_thai.setStyleSheet("""
-            QPlainTextEdit {
-                background-color: #ffffff;
-                color: #000000;
-                border: 2px solid;
-                border-color: #808080 #808080 #ffffff #808080;
-                border-right: 1px solid #727272;
-                border-radius: 0px;
-                padding: 2px;
-            }
-        """)
-        
-        # Right column of right pane: Braille Font dots (RichEdit2 in Delphi)
+        self.txt_braille_thai.hide()
+
+        # --- Right Panel: Braille Font dots (RichEdit2 in Delphi) ---
         self.txt_braille = QPlainTextEdit()
         if self.simbrl_font_loaded:
             self.txt_braille.setFont(QFont("SimBraille", 18))
@@ -1788,18 +2242,7 @@ class TBTWMainWindow(QMainWindow):
             self.txt_braille.setFont(QFont("Courier New", 13))
             
         self.txt_braille.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        self.txt_braille.setStyleSheet("""
-            QPlainTextEdit {
-                background-color: #ffffff;
-                color: #000000;
-                border: 2px solid;
-                border-color: #808080 #ffffff #ffffff transparent;
-                border-radius: 0px;
-                padding: 2px;
-                selection-background-color: #000080;
-                selection-color: #ffffff;
-            }
-        """)
+        self.txt_braille.setStyleSheet(editor_style)
         self.txt_braille.setAccessibleName("ข้อมูลแปล กล่องข้อความอักษรเบรลล์ Braille Font")
         self.txt_braille.setAccessibleDescription(
             "กล่องข้อความแสดงผลอักษรเบรลล์ที่แปลแล้ว รองรับฟอนต์ SimBraille กำหนดขอบเขต 30 เซลล์ต่อบรรทัด "
@@ -1808,29 +2251,14 @@ class TBTWMainWindow(QMainWindow):
         self.txt_braille.setWhatsThis("กล่องแสดงผลอักษรเบรลล์ (Braille Font) สำหรับตรวจทานและส่งออกเครื่องพิมพ์เบรลล์")
         self.txt_braille.installEventFilter(self)
         
-        # Synchronize vertical scrolling between Thai preview and Braille dots
-        vs_br = self.txt_braille.verticalScrollBar()
-        vs_th = self.txt_braille_thai.verticalScrollBar()
-        if vs_br is not None and vs_th is not None:
-            vs_br.valueChanged.connect(vs_th.setValue)
-            vs_th.valueChanged.connect(vs_br.setValue)
-        
-        # ใช้ QSplitter แนวนอนภายในฝั่งขวา เพื่อให้ปรับขยายคอลัมน์อ้างอิงภาษาไทยได้คล่องตัว
-        self.right_splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.right_splitter.addWidget(self.txt_braille_thai)
-        self.right_splitter.addWidget(self.txt_braille)
-        self.right_splitter.setSizes([260, 420])
-        right_layout.addWidget(self.right_splitter)
-        
         # Set expanding size policies to allow editors to stretch smoothly with the window
         self.txt_normal.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        right_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.txt_braille_thai.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.txt_braille.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.splitter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
+        # 2 Main Panels: Left (Thai Original) and Right (Braille Dots)
         self.splitter.addWidget(self.txt_normal)
-        self.splitter.addWidget(right_container)
+        self.splitter.addWidget(self.txt_braille)
         self.splitter.setSizes([512, 512])
         
         # ตั้งค่า Tab Order ให้เป็นธรรมชาติ
@@ -1840,7 +2268,7 @@ class TBTWMainWindow(QMainWindow):
         main_layout.addWidget(self.splitter, 1)
         
         # Label ข้อความสถานะสำหรับเก็บข้อความและ Screen Reader (ซ่อนไม่ให้กินพื้นที่แนวตั้ง ให้ชิด status bar เหมือน Delphi)
-        self.lbl_status_msg = QLabel("โปรแกรมแปลเอกสารเป็นอักษรเบรลล์ (SiamBraille 3.0 Professional)", self)
+        self.lbl_status_msg = QLabel("โปรแกรมแปลเอกสารเป็นอักษรเบรลล์ (SiamBraille 1.0 Professional)", self)
         self.lbl_status_msg.hide()
 
     def set_status_message(self, msg: str):
@@ -1934,6 +2362,9 @@ class TBTWMainWindow(QMainWindow):
             
             # Print Submenu
             self.menu_print = self.menu_file.addMenu("&Print")
+            if not self.menu_print:
+                self.menu_print = QMenu("&Print", self.menu_file)
+                self.menu_file.addMenu(self.menu_print)
             if self.menu_print:
                 self.menu_print.setStatusTip("ส่งไปเครื่องพิมพ์ปกติ")
                 
@@ -2077,6 +2508,9 @@ class TBTWMainWindow(QMainWindow):
             
             # Page Number Location Submenu
             self.menu_page_num = self.menu_default.addMenu("&Page Number Location")
+            if not self.menu_page_num:
+                self.menu_page_num = QMenu("&Page Number Location", self.menu_default)
+                self.menu_default.addMenu(self.menu_page_num)
             if self.menu_page_num:
                 self.group_page_num = QActionGroup(self)
                 self.group_page_num.setExclusive(True)
@@ -2098,6 +2532,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # Printer Port Submenu
             self.menu_printer_port = self.menu_default.addMenu("Printer &Port")
+            if not self.menu_printer_port:
+                self.menu_printer_port = QMenu("Printer &Port", self.menu_default)
+                self.menu_default.addMenu(self.menu_printer_port)
             if self.menu_printer_port:
                 self.group_port = QActionGroup(self)
                 self.group_port.setExclusive(True)
@@ -2119,6 +2556,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # Printing Mode Submenu
             self.menu_print_mode = self.menu_default.addMenu("Printing &Mode")
+            if not self.menu_print_mode:
+                self.menu_print_mode = QMenu("Printing &Mode", self.menu_default)
+                self.menu_default.addMenu(self.menu_print_mode)
             if self.menu_print_mode:
                 self.group_pmode = QActionGroup(self)
                 self.group_pmode.setExclusive(True)
@@ -2136,6 +2576,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # Page Advance Submenu
             self.menu_page_adv = self.menu_default.addMenu("Page &Advance")
+            if not self.menu_page_adv:
+                self.menu_page_adv = QMenu("Page &Advance", self.menu_default)
+                self.menu_default.addMenu(self.menu_page_adv)
             if self.menu_page_adv:
                 self.group_padv = QActionGroup(self)
                 self.group_padv.setExclusive(True)
@@ -2153,6 +2596,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # Set Font Submenu
             self.menu_set_font = self.menu_default.addMenu("Set &Font")
+            if not self.menu_set_font:
+                self.menu_set_font = QMenu("Set &Font", self.menu_default)
+                self.menu_default.addMenu(self.menu_set_font)
             if self.menu_set_font:
                 self.group_font = QActionGroup(self)
                 self.group_font.setExclusive(True)
@@ -2170,6 +2616,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # Set Keyboard Submenu
             self.menu_set_kb = self.menu_default.addMenu("Set &Keyboard")
+            if not self.menu_set_kb:
+                self.menu_set_kb = QMenu("Set &Keyboard", self.menu_default)
+                self.menu_default.addMenu(self.menu_set_kb)
             if self.menu_set_kb:
                 self.group_kb = QActionGroup(self)
                 self.group_kb.setExclusive(True)
@@ -2187,6 +2636,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # Thai Braille Level Submenu
             self.menu_th_level = self.menu_default.addMenu("&Thai Braille Level")
+            if not self.menu_th_level:
+                self.menu_th_level = QMenu("&Thai Braille Level", self.menu_default)
+                self.menu_default.addMenu(self.menu_th_level)
             if self.menu_th_level:
                 self.group_th_lvl = QActionGroup(self)
                 self.group_th_lvl.setExclusive(True)
@@ -2207,6 +2659,9 @@ class TBTWMainWindow(QMainWindow):
                 
             # English Braille Level Submenu
             self.menu_en_level = self.menu_default.addMenu("&English Braille Level")
+            if not self.menu_en_level:
+                self.menu_en_level = QMenu("&English Braille Level", self.menu_default)
+                self.menu_default.addMenu(self.menu_en_level)
             if self.menu_en_level:
                 self.group_en_lvl = QActionGroup(self)
                 self.group_en_lvl.setExclusive(True)
@@ -2230,12 +2685,26 @@ class TBTWMainWindow(QMainWindow):
         # ---------------------------------------------------------
         self.menu_tools = menubar.addMenu("&Tools")
         if self.menu_tools:
+            self.act_remote_input = QAction("&Remote Mobile Input (LAN)...\tCtrl+Shift+W", self)
+            self.act_remote_input.setShortcut(QKeySequence("Ctrl+Shift+W"))
+            self.act_remote_input.setWhatsThis("พิมพ์ข้อความผ่านมือถือในวง LAN เดียวกัน รองรับการพิมพ์ด้วยเสียงและแป้นสัมผัส 6 จุด คีย์ลัด Ctrl+Shift+W")
+            self.act_remote_input.setStatusTip("พิมพ์ผ่านมือถือในวง LAN เดียวกัน (Ctrl+Shift+W)")
+            self.act_remote_input.triggered.connect(self.open_remote_input_dialog)
+            self.menu_tools.addAction(self.act_remote_input)
+
             self.act_tactile = QAction("&Tactile Graphics from Image...\tCtrl+G", self)
             self.act_tactile.setShortcut(QKeySequence("Ctrl+G"))
             self.act_tactile.setWhatsThis("แปลงภาพเป็นสื่อจุดนูนสัมผัส Image to Braille Tactile Graphics")
             self.act_tactile.setStatusTip("แปลงภาพเป็นสื่อจุดสัมผัสเบรลล์ (Ctrl+G)")
             self.act_tactile.triggered.connect(self.open_tactile_graphics_dialog)
             self.menu_tools.addAction(self.act_tactile)
+
+            self.act_dot_converter = QAction("แปลงเป็นเลขจุดเบรลล์ (ก→1245, a→1, b→12)...\tCtrl+Shift+D", self)
+            self.act_dot_converter.setShortcut(QKeySequence("Ctrl+Shift+D"))
+            self.act_dot_converter.setWhatsThis("แปลงข้อความภาษาไทย/อังกฤษเป็นเลขตำแหน่งจุดเบรลล์ 1 ถึง 6 เช่น ก=1245, a=1, b=12 คีย์ลัด Ctrl+Shift+D")
+            self.act_dot_converter.setStatusTip("แปลงข้อความเป็นชุดเลขจุดเบรลล์ 1-6 (Ctrl+Shift+D)")
+            self.act_dot_converter.triggered.connect(self.open_dot_converter_dialog)
+            self.menu_tools.addAction(self.act_dot_converter)
 
         # ---------------------------------------------------------
         # 5. Help Menu (Alt+H)
@@ -2351,114 +2820,178 @@ class TBTWMainWindow(QMainWindow):
         if hasattr(self, "menu_file") and self.menu_file:
             self.menu_file.setTitle("แฟ้ม (&F)" if is_th else "&File")
             self.menu_file.setStatusTip("เมนูแฟ้มข้อมูล (Alt+F)" if is_th else "File Menu (Alt+F)")
-            self.act_new.setText("เปิดเอกสารใหม่ (&N)\tCtrl+N" if is_th else "&New\tCtrl+N")
-            self.act_new.setStatusTip("เปิดเอกสารใหม่ (Ctrl+N)" if is_th else "Create new document (Ctrl+N)")
-            self.act_open.setText("เปิดเอกสารเดิม (&O)...\tCtrl+O" if is_th else "&Open...\tCtrl+O")
-            self.act_open.setStatusTip("เปิดเอกสารเดิม (Ctrl+O)" if is_th else "Open existing document (Ctrl+O)")
-            self.act_translate.setText("แปลเอกสาร (&T)\tCtrl+T" if is_th else "&Translate\tCtrl+T")
-            self.act_translate.setStatusTip("แปลเป็นอักษรเบรลล์ (Ctrl+T)" if is_th else "Translate to Braille (Ctrl+T)")
+            if hasattr(self, "act_new") and self.act_new:
+                self.act_new.setText("เปิดเอกสารใหม่ (&N)\tCtrl+N" if is_th else "&New\tCtrl+N")
+                self.act_new.setStatusTip("เปิดเอกสารใหม่ (Ctrl+N)" if is_th else "Create new document (Ctrl+N)")
+            if hasattr(self, "act_open") and self.act_open:
+                self.act_open.setText("เปิดเอกสารเดิม (&O)...\tCtrl+O" if is_th else "&Open...\tCtrl+O")
+                self.act_open.setStatusTip("เปิดเอกสารเดิม (Ctrl+O)" if is_th else "Open existing document (Ctrl+O)")
+            if hasattr(self, "act_translate") and self.act_translate:
+                self.act_translate.setText("แปลเอกสาร (&T)\tCtrl+T" if is_th else "&Translate\tCtrl+T")
+                self.act_translate.setStatusTip("แปลเป็นอักษรเบรลล์ (Ctrl+T)" if is_th else "Translate to Braille (Ctrl+T)")
             if hasattr(self, "menu_print") and self.menu_print:
                 self.menu_print.setTitle("พิมพ์ (&P)" if is_th else "&Print")
-                self.act_print_reg.setText("พิมพ์อักษรปกติ (&R)" if is_th else "&Regular text")
-                self.act_print_dots.setText("พิมพ์จุดเบรลล์ (&B)" if is_th else "&Braille dots")
-            self.act_braille_print.setText("ส่งไปเครื่องพิมพ์เบรลล์ (&B)...\tCtrl+B" if is_th else "&Braille...\tCtrl+B")
-            self.act_braille_print.setStatusTip("ส่งไปเครื่องพิมพ์เบรลล์ (Ctrl+B)" if is_th else "Export Braille (.BRF) (Ctrl+B)")
-            self.act_print_setup.setText("ตั้งค่าหน้ากระดาษ (&S)...\tCtrl+P" if is_th else "Print &Setup...\tCtrl+P")
-            self.act_print_setup.setStatusTip("ตั้งค่าหน้ากระดาษและเครื่องพิมพ์ (Ctrl+P)" if is_th else "Print Page Setup (Ctrl+P)")
-            self.act_save.setText("บันทึก (&S)\tCtrl+S" if is_th else "&Save\tCtrl+S")
-            self.act_save.setStatusTip("บันทึกเอกสาร (Ctrl+S)" if is_th else "Save document (Ctrl+S)")
-            self.act_save_as.setText("บันทึกเป็น (&A)..." if is_th else "Save &As...")
-            self.act_save_as.setStatusTip("บันทึกเป็นไฟล์ใหม่" if is_th else "Save as new file")
-            self.act_save_all.setText("บันทึกทั้งหมด (&L)\tCtrl+A" if is_th else "Save Al&l\tCtrl+A")
-            self.act_exit.setText("ออกจากโปรแกรม (&X)\tAlt+F4" if is_th else "E&xit\tAlt+F4")
+                if hasattr(self, "act_print_reg") and self.act_print_reg:
+                    self.act_print_reg.setText("พิมพ์อักษรปกติ (&R)" if is_th else "&Regular text")
+                if hasattr(self, "act_print_dots") and self.act_print_dots:
+                    self.act_print_dots.setText("พิมพ์จุดเบรลล์ (&B)" if is_th else "&Braille dots")
+            if hasattr(self, "act_braille_print") and self.act_braille_print:
+                self.act_braille_print.setText("ส่งไปเครื่องพิมพ์เบรลล์ (&B)...\tCtrl+B" if is_th else "&Braille...\tCtrl+B")
+                self.act_braille_print.setStatusTip("ส่งไปเครื่องพิมพ์เบรลล์ (Ctrl+B)" if is_th else "Export Braille (.BRF) (Ctrl+B)")
+            if hasattr(self, "act_print_setup") and self.act_print_setup:
+                self.act_print_setup.setText("ตั้งค่าหน้ากระดาษ (&S)...\tCtrl+P" if is_th else "Print &Setup...\tCtrl+P")
+                self.act_print_setup.setStatusTip("ตั้งค่าหน้ากระดาษและเครื่องพิมพ์ (Ctrl+P)" if is_th else "Print Page Setup (Ctrl+P)")
+            if hasattr(self, "act_save") and self.act_save:
+                self.act_save.setText("บันทึก (&S)\tCtrl+S" if is_th else "&Save\tCtrl+S")
+                self.act_save.setStatusTip("บันทึกเอกสาร (Ctrl+S)" if is_th else "Save document (Ctrl+S)")
+            if hasattr(self, "act_save_as") and self.act_save_as:
+                self.act_save_as.setText("บันทึกเป็น (&A)..." if is_th else "Save &As...")
+                self.act_save_as.setStatusTip("บันทึกเป็นไฟล์ใหม่" if is_th else "Save as new file")
+            if hasattr(self, "act_save_all") and self.act_save_all:
+                self.act_save_all.setText("บันทึกทั้งหมด (&L)\tCtrl+A" if is_th else "Save Al&l\tCtrl+A")
+            if hasattr(self, "act_exit") and self.act_exit:
+                self.act_exit.setText("ออกจากโปรแกรม (&X)\tAlt+F4" if is_th else "E&xit\tAlt+F4")
 
         # 2. Edit Menu
         if hasattr(self, "menu_edit") and self.menu_edit:
             self.menu_edit.setTitle("แก้ไข (&E)" if is_th else "&Edit")
             self.menu_edit.setStatusTip("เมนูแก้ไข (Alt+E)" if is_th else "Edit Menu (Alt+E)")
-            self.act_cut.setText("ตัด (&T)\tCtrl+X" if is_th else "Cu&t\tCtrl+X")
-            self.act_cut.setStatusTip("ตัดข้อความ (Ctrl+X)" if is_th else "Cut text (Ctrl+X)")
-            self.act_copy.setText("คัดลอก (&C)\tCtrl+C" if is_th else "&Copy\tCtrl+C")
-            self.act_copy.setStatusTip("คัดลอกข้อความ (Ctrl+C)" if is_th else "Copy text (Ctrl+C)")
-            self.act_paste.setText("วาง (&P)\tCtrl+V" if is_th else "&Paste\tCtrl+V")
-            self.act_paste.setStatusTip("วางข้อความ (Ctrl+V)" if is_th else "Paste text (Ctrl+V)")
-            self.act_find.setText("ค้นหา (&F)...\tCtrl+F" if is_th else "&Find...\tCtrl+F")
-            self.act_find.setStatusTip("ค้นหาข้อความ (Ctrl+F)" if is_th else "Find text (Ctrl+F)")
-            self.act_replace.setText("แทนที่ (&R)...\tCtrl+R" if is_th else "&Replace...\tCtrl+R")
-            self.act_replace.setStatusTip("แทนที่ข้อความ (Ctrl+R)" if is_th else "Replace text (Ctrl+R)")
-            self.act_font.setText("แบบอักษร (&F)..." if is_th else "&Font...")
-            self.act_wrap.setText("ตัดคำขึ้นบรรทัดใหม่อัตโนมัติ (&W)" if is_th else "&Word Wrap")
-            self.act_fullscreen.setText("แสดงผลเต็มจอ (&S)\tF11" if is_th else "Full &Screen\tF11")
-            self.act_switch_win.setText("สลับหน้าต่างข้อความ (&W)\tF6" if is_th else "Switch &Window\tF6")
+            if hasattr(self, "act_cut") and self.act_cut:
+                self.act_cut.setText("ตัด (&T)\tCtrl+X" if is_th else "Cu&t\tCtrl+X")
+                self.act_cut.setStatusTip("ตัดข้อความ (Ctrl+X)" if is_th else "Cut text (Ctrl+X)")
+            if hasattr(self, "act_copy") and self.act_copy:
+                self.act_copy.setText("คัดลอก (&C)\tCtrl+C" if is_th else "&Copy\tCtrl+C")
+                self.act_copy.setStatusTip("คัดลอกข้อความ (Ctrl+C)" if is_th else "Copy text (Ctrl+C)")
+            if hasattr(self, "act_paste") and self.act_paste:
+                self.act_paste.setText("วาง (&P)\tCtrl+V" if is_th else "&Paste\tCtrl+V")
+                self.act_paste.setStatusTip("วางข้อความ (Ctrl+V)" if is_th else "Paste text (Ctrl+V)")
+            if hasattr(self, "act_find") and self.act_find:
+                self.act_find.setText("ค้นหา (&F)...\tCtrl+F" if is_th else "&Find...\tCtrl+F")
+                self.act_find.setStatusTip("ค้นหาข้อความ (Ctrl+F)" if is_th else "Find text (Ctrl+F)")
+            if hasattr(self, "act_replace") and self.act_replace:
+                self.act_replace.setText("แทนที่ (&R)...\tCtrl+R" if is_th else "&Replace...\tCtrl+R")
+                self.act_replace.setStatusTip("แทนที่ข้อความ (Ctrl+R)" if is_th else "Replace text (Ctrl+R)")
+            if hasattr(self, "act_font") and self.act_font:
+                self.act_font.setText("แบบอักษร (&F)..." if is_th else "&Font...")
+            if hasattr(self, "act_wrap") and self.act_wrap:
+                self.act_wrap.setText("ตัดคำขึ้นบรรทัดใหม่อัตโนมัติ (&W)" if is_th else "&Word Wrap")
+            if hasattr(self, "act_fullscreen") and self.act_fullscreen:
+                self.act_fullscreen.setText("แสดงผลเต็มจอ (&S)\tF11" if is_th else "Full &Screen\tF11")
+            if hasattr(self, "act_switch_win") and self.act_switch_win:
+                self.act_switch_win.setText("สลับหน้าต่างข้อความ (&W)\tF6" if is_th else "Switch &Window\tF6")
 
         # 3. Default Menu
         if hasattr(self, "menu_default") and self.menu_default:
             self.menu_default.setTitle("ค่าเริ่มต้น (&D)" if is_th else "&Default")
             self.menu_default.setStatusTip("เมนูค่าเริ่มต้น (Alt+D)" if is_th else "Default Settings Menu (Alt+D)")
-            self.act_braille_page.setText("ตั้งค่าหน้ากระดาษเบรลล์ (&B)..." if is_th else "&Braille Page...")
-            self.menu_page_num.setTitle("ตำแหน่งหมายเลขหน้า (&P)" if is_th else "&Page Number Location")
+            if hasattr(self, "act_braille_page") and self.act_braille_page:
+                self.act_braille_page.setText("ตั้งค่าหน้ากระดาษเบรลล์ (&B)..." if is_th else "&Braille Page...")
             
             sel = " (เลือก)" if is_th else " selected"
-            self.act_pn_tl.setText("บนซ้าย" if is_th else "Top &Left")
-            self.act_pn_tr.setText(("บนขวา" + (sel if self.act_pn_tr.isChecked() else "")) if is_th else ("Top &Right" + (sel if self.act_pn_tr.isChecked() else "")))
-            self.act_pn_bl.setText("ล่างซ้าย" if is_th else "Bottom L&eft")
-            self.act_pn_br.setText("ล่างขวา" if is_th else "Bottom R&ight")
             
-            self.menu_printer_port.setTitle("พอร์ตเครื่องพิมพ์ (&P)" if is_th else "Printer &Port")
-            self.act_port_c1.setText("Serial Com1" if is_th else "Serial Com&1")
-            self.act_port_c2.setText("Serial Com2" if is_th else "Serial Com&2")
-            self.act_port_l1.setText(("Printer LPT1" + (sel if self.act_port_l1.isChecked() else "")) if is_th else ("Printer LP&T1" + (sel if self.act_port_l1.isChecked() else "")))
-            self.act_port_l2.setText("Printer LPT2" if is_th else "Printer LPT&2")
+            if hasattr(self, "menu_page_num") and self.menu_page_num:
+                self.menu_page_num.setTitle("ตำแหน่งหมายเลขหน้า (&P)" if is_th else "&Page Number Location")
+            if hasattr(self, "act_pn_tl") and self.act_pn_tl:
+                self.act_pn_tl.setText("บนซ้าย" if is_th else "Top &Left")
+            if hasattr(self, "act_pn_tr") and self.act_pn_tr:
+                self.act_pn_tr.setText(("บนขวา" + (sel if self.act_pn_tr.isChecked() else "")) if is_th else ("Top &Right" + (sel if self.act_pn_tr.isChecked() else "")))
+            if hasattr(self, "act_pn_bl") and self.act_pn_bl:
+                self.act_pn_bl.setText("ล่างซ้าย" if is_th else "Bottom L&eft")
+            if hasattr(self, "act_pn_br") and self.act_pn_br:
+                self.act_pn_br.setText("ล่างขวา" if is_th else "Bottom R&ight")
+            
+            if hasattr(self, "menu_printer_port") and self.menu_printer_port:
+                self.menu_printer_port.setTitle("พอร์ตเครื่องพิมพ์ (&P)" if is_th else "Printer &Port")
+            if hasattr(self, "act_port_c1") and self.act_port_c1:
+                self.act_port_c1.setText("Serial Com1" if is_th else "Serial Com&1")
+            if hasattr(self, "act_port_c2") and self.act_port_c2:
+                self.act_port_c2.setText("Serial Com2" if is_th else "Serial Com&2")
+            if hasattr(self, "act_port_l1") and self.act_port_l1:
+                self.act_port_l1.setText(("Printer LPT1" + (sel if self.act_port_l1.isChecked() else "")) if is_th else ("Printer LP&T1" + (sel if self.act_port_l1.isChecked() else "")))
+            if hasattr(self, "act_port_l2") and self.act_port_l2:
+                self.act_port_l2.setText("Printer LPT2" if is_th else "Printer LPT&2")
 
-            self.menu_print_mode.setTitle("โหมดการพิมพ์ (&M)" if is_th else "Printing &Mode")
-            self.act_pm_s.setText("หน้าเดียว" if is_th else "&Single Side")
-            self.act_pm_d.setText(("สองหน้า" + (sel if self.act_pm_d.isChecked() else "")) if is_th else ("&Double Side" + (sel if self.act_pm_d.isChecked() else "")))
+            if hasattr(self, "menu_print_mode") and self.menu_print_mode:
+                self.menu_print_mode.setTitle("โหมดการพิมพ์ (&M)" if is_th else "Printing &Mode")
+            if hasattr(self, "act_pm_s") and self.act_pm_s:
+                self.act_pm_s.setText("หน้าเดียว" if is_th else "&Single Side")
+            if hasattr(self, "act_pm_d") and self.act_pm_d:
+                self.act_pm_d.setText(("สองหน้า" + (sel if self.act_pm_d.isChecked() else "")) if is_th else ("&Double Side" + (sel if self.act_pm_d.isChecked() else "")))
 
-            self.menu_page_adv.setTitle("เลื่อนหน้ากระดาษ (&A)" if is_th else "Page &Advance")
-            self.act_pa_y.setText("ใช่" if is_th else "&Yes")
-            self.act_pa_n.setText(("ไม่" + (sel if self.act_pa_n.isChecked() else "")) if is_th else ("&No" + (sel if self.act_pa_n.isChecked() else "")))
+            if hasattr(self, "menu_page_adv") and self.menu_page_adv:
+                self.menu_page_adv.setTitle("เลื่อนหน้ากระดาษ (&A)" if is_th else "Page &Advance")
+            if hasattr(self, "act_pa_y") and self.act_pa_y:
+                self.act_pa_y.setText("ใช่" if is_th else "&Yes")
+            if hasattr(self, "act_pa_n") and self.act_pa_n:
+                self.act_pa_n.setText(("ไม่" + (sel if self.act_pa_n.isChecked() else "")) if is_th else ("&No" + (sel if self.act_pa_n.isChecked() else "")))
 
-            self.menu_set_font.setTitle("แบบอักษรเริ่มต้น (&F)" if is_th else "Set &Font")
-            self.act_font_term.setText("Terminal สำหรับผู้พิการทางสายตา" if is_th else "&Terminal font for the blind")
-            self.act_font_sans.setText(("Microsoft Sans Serif สำหรับสายตาปกติ" + (sel if self.act_font_sans.isChecked() else "")) if is_th else ("&Microsoft Sans Serif font for the sighted" + (sel if self.act_font_sans.isChecked() else "")))
+            if hasattr(self, "menu_set_font") and self.menu_set_font:
+                self.menu_set_font.setTitle("แบบอักษรเริ่มต้น (&F)" if is_th else "Set &Font")
+            if hasattr(self, "act_font_term") and self.act_font_term:
+                self.act_font_term.setText("Terminal สำหรับผู้พิการทางสายตา" if is_th else "&Terminal font for the blind")
+            if hasattr(self, "act_font_sans") and self.act_font_sans:
+                self.act_font_sans.setText(("Microsoft Sans Serif สำหรับสายตาปกติ" + (sel if self.act_font_sans.isChecked() else "")) if is_th else ("&Microsoft Sans Serif font for the sighted" + (sel if self.act_font_sans.isChecked() else "")))
 
-            self.menu_set_kb.setTitle("แป้นพิมพ์ดีด (&K)" if is_th else "Set &Keyboard")
-            self.act_kb_th.setText(("แป้นพิมพ์ไทย" + (sel if self.act_kb_th.isChecked() else "")) if is_th else ("&Thai Keyboard" + (sel if self.act_kb_th.isChecked() else "")))
-            self.act_kb_en.setText("แป้นพิมพ์อังกฤษ" if is_th else "&English Keyboard")
+            if hasattr(self, "menu_set_kb") and self.menu_set_kb:
+                self.menu_set_kb.setTitle("แป้นพิมพ์ดีด (&K)" if is_th else "Set &Keyboard")
+            if hasattr(self, "act_kb_th") and self.act_kb_th:
+                self.act_kb_th.setText(("แป้นพิมพ์ไทย" + (sel if self.act_kb_th.isChecked() else "")) if is_th else ("&Thai Keyboard" + (sel if self.act_kb_th.isChecked() else "")))
+            if hasattr(self, "act_kb_en") and self.act_kb_en:
+                self.act_kb_en.setText("แป้นพิมพ์อังกฤษ" if is_th else "&English Keyboard")
 
-            self.menu_th_level.setTitle("ระดับอักษรเบรลล์ไทย (&T)" if is_th else "&Thai Braille Level")
-            self.act_th_g1.setText(("ระดับ 1 พร้อมคำย่อพื้นฐาน" + (sel if self.thai_grade == 1 else "")) if is_th else ("&Grade 1 with some short form" + (sel if self.thai_grade == 1 else "")))
-            self.act_th_g2.setText(("ระดับ 2 มีคำย่อ" + (sel if self.thai_grade == 2 else "")) if is_th else ("Grade &2 with contractions" + (sel if self.thai_grade == 2 else "")))
+            if hasattr(self, "menu_th_level") and self.menu_th_level:
+                self.menu_th_level.setTitle("ระดับอักษรเบรลล์ไทย (&T)" if is_th else "&Thai Braille Level")
+            if hasattr(self, "act_th_g1") and self.act_th_g1:
+                self.act_th_g1.setText(("ระดับ 1 พร้อมคำย่อพื้นฐาน" + (sel if self.thai_grade == 1 else "")) if is_th else ("&Grade 1 with some short form" + (sel if self.thai_grade == 1 else "")))
+            if hasattr(self, "act_th_g2") and self.act_th_g2:
+                self.act_th_g2.setText(("ระดับ 2 มีคำย่อ" + (sel if self.thai_grade == 2 else "")) if is_th else ("Grade &2 with contractions" + (sel if self.thai_grade == 2 else "")))
 
-            self.menu_en_level.setTitle("ระดับอักษรเบรลล์อังกฤษ (&E)" if is_th else "&English Braille Level")
-            self.act_en_g1.setText(("ระดับ 1 ไม่มีคำย่อ" + (sel if self.english_grade == 1 else "")) if is_th else ("Grade &1 with no contractions" + (sel if self.english_grade == 1 else "")))
-            self.act_en_g2.setText(("ระดับ 2 มีคำย่อ" + (sel if self.english_grade == 2 else "")) if is_th else ("Grade &2 with contractions" + (sel if self.english_grade == 2 else "")))
+            if hasattr(self, "menu_en_level") and self.menu_en_level:
+                self.menu_en_level.setTitle("ระดับอักษรเบรลล์อังกฤษ (&E)" if is_th else "&English Braille Level")
+            if hasattr(self, "act_en_g1") and self.act_en_g1:
+                self.act_en_g1.setText(("ระดับ 1 ไม่มีคำย่อ" + (sel if self.english_grade == 1 else "")) if is_th else ("Grade &1 with no contractions" + (sel if self.english_grade == 1 else "")))
+            if hasattr(self, "act_en_g2") and self.act_en_g2:
+                self.act_en_g2.setText(("ระดับ 2 มีคำย่อ" + (sel if self.english_grade == 2 else "")) if is_th else ("Grade &2 with contractions" + (sel if self.english_grade == 2 else "")))
 
         # 4. Tools Menu
         if hasattr(self, "menu_tools") and self.menu_tools:
             self.menu_tools.setTitle("เครื่องมือ (&T)" if is_th else "&Tools")
             self.menu_tools.setStatusTip("เมนูเครื่องมือสร้างสื่อ (Alt+T)" if is_th else "Tools Menu (Alt+T)")
-            self.act_tactile.setText("สร้างภาพนูนสัมผัสจากรูปภาพ (&G)...\tCtrl+G" if is_th else "&Tactile Graphics from Image...\tCtrl+G")
-            self.act_tactile.setStatusTip("แปลงภาพเป็นสื่อจุดสัมผัสเบรลล์ (Ctrl+G)" if is_th else "Convert image to tactile Braille graphics (Ctrl+G)")
+            if hasattr(self, "act_remote_input") and self.act_remote_input:
+                self.act_remote_input.setText("พิมพ์ผ่านมือถือในวง LAN (&W)...\tCtrl+Shift+W" if is_th else "&Remote Mobile Input (LAN)...\tCtrl+Shift+W")
+                self.act_remote_input.setStatusTip("พิมพ์ผ่านมือถือในวง LAN เดียวกัน (Ctrl+Shift+W)" if is_th else "Remote input via mobile in same LAN (Ctrl+Shift+W)")
+            if hasattr(self, "act_tactile") and self.act_tactile:
+                self.act_tactile.setText("สร้างภาพนูนสัมผัสจากรูปภาพ (&G)...\tCtrl+G" if is_th else "&Tactile Graphics from Image...\tCtrl+G")
+                self.act_tactile.setStatusTip("แปลงภาพเป็นสื่อจุดสัมผัสเบรลล์ (Ctrl+G)" if is_th else "Convert image to tactile Braille graphics (Ctrl+G)")
+            if hasattr(self, "act_dot_converter") and self.act_dot_converter:
+                self.act_dot_converter.setText("แปลงเป็นเลขจุดเบรลล์ (ก→1245, a→1, b→12) (&D)...\tCtrl+Shift+D" if is_th else "&Braille Dot Numbers Converter (a->1, b->12)...\tCtrl+Shift+D")
+                self.act_dot_converter.setStatusTip("แปลงเป็นเลขตำแหน่งจุดเบรลล์ 1-6 (Ctrl+Shift+D)" if is_th else "Convert to Braille dot numbers 1-6 (Ctrl+Shift+D)")
 
         # 5. Help Menu
         if hasattr(self, "menu_help") and self.menu_help:
             self.menu_help.setTitle("ช่วยเหลือ (&H)" if is_th else "&Help")
             self.menu_help.setStatusTip("เมนูช่วยเหลือ (Alt+H)" if is_th else "Help Menu (Alt+H)")
-            self.act_help_doc.setText("คู่มือการใช้งาน (&H)\tF1" if is_th else "&Help\tF1")
-            self.act_help_doc.setStatusTip("คู่มือและวิธีใช้โปรแกรม (F1)" if is_th else "User manual and shortcuts (F1)")
-            self.act_switch_lang.setText("Switch to English (&L)\tCtrl+L" if is_th else "สลับเป็นภาษาไทย (Switch to Thai) (&L)\tCtrl+L")
-            self.act_switch_lang.setStatusTip("สลับภาษาเมนู (Ctrl+L)" if is_th else "Switch menu language (Ctrl+L)")
-            self.act_buy_lic.setText("สั่งซื้อลิขสิทธิ์ (&B)..." if is_th else "&Buy License...")
-            self.act_buy_lic.setStatusTip("สั่งซื้อลิขสิทธิ์ SiamBraille 1.0" if is_th else "Purchase SiamBraille 1.0 license")
-            self.act_activate_lic.setText("เปิดใช้งานรหัสลิขสิทธิ์ (&A)..." if is_th else "&Activate License Key...")
-            self.act_activate_lic.setStatusTip("กรอกรหัส License Key เพื่อเปิดใช้งาน" if is_th else "Enter License Key to activate")
-            self.act_check_update.setText("ตรวจสอบการอัปเดต (&U)..." if is_th else "&Check for Updates...")
-            self.act_check_update.setStatusTip("ตรวจสอบเวอร์ชันล่าสุด" if is_th else "Check for the latest updates")
-            self.act_about.setText("เกี่ยวกับโปรแกรม SiamBraille (&A)..." if is_th else "&About SiamBraille...")
-            self.act_about.setStatusTip("เกี่ยวกับโปรแกรม SiamBraille และสถานะลิขสิทธิ์" if is_th else "About SiamBraille and license information")
-            self.act_contact.setText("ข้อมูลติดต่อและบริการ (&C)..." if is_th else "&Contact & Support...")
-            self.act_contact.setStatusTip("ข้อมูลติดต่อทีมพัฒนา" if is_th else "Contact support and development team")
+            if hasattr(self, "act_help_doc") and self.act_help_doc:
+                self.act_help_doc.setText("คู่มือการใช้งาน (&H)\tF1" if is_th else "&Help\tF1")
+                self.act_help_doc.setStatusTip("คู่มือและวิธีใช้โปรแกรม (F1)" if is_th else "User manual and shortcuts (F1)")
+            if hasattr(self, "act_switch_lang") and self.act_switch_lang:
+                self.act_switch_lang.setText("Switch to English (&L)\tCtrl+L" if is_th else "สลับเป็นภาษาไทย (Switch to Thai) (&L)\tCtrl+L")
+                self.act_switch_lang.setStatusTip("สลับภาษาเมนู (Ctrl+L)" if is_th else "Switch menu language (Ctrl+L)")
+            if hasattr(self, "act_buy_lic") and self.act_buy_lic:
+                self.act_buy_lic.setText("สั่งซื้อลิขสิทธิ์ (&B)..." if is_th else "&Buy License...")
+                self.act_buy_lic.setStatusTip("สั่งซื้อลิขสิทธิ์ SiamBraille 1.0" if is_th else "Purchase SiamBraille 1.0 license")
+            if hasattr(self, "act_activate_lic") and self.act_activate_lic:
+                self.act_activate_lic.setText("เปิดใช้งานรหัสลิขสิทธิ์ (&A)..." if is_th else "&Activate License Key...")
+                self.act_activate_lic.setStatusTip("กรอกรหัส License Key เพื่อเปิดใช้งาน" if is_th else "Enter License Key to activate")
+            if hasattr(self, "act_check_update") and self.act_check_update:
+                self.act_check_update.setText("ตรวจสอบการอัปเดต (&U)..." if is_th else "&Check for Updates...")
+                self.act_check_update.setStatusTip("ตรวจสอบเวอร์ชันล่าสุด" if is_th else "Check for the latest updates")
+            if hasattr(self, "act_about") and self.act_about:
+                self.act_about.setText("เกี่ยวกับโปรแกรม SiamBraille (&A)..." if is_th else "&About SiamBraille...")
+                self.act_about.setStatusTip("เกี่ยวกับโปรแกรม SiamBraille และสถานะลิขสิทธิ์" if is_th else "About SiamBraille and license information")
+            if hasattr(self, "act_contact") and self.act_contact:
+                self.act_contact.setText("ข้อมูลติดต่อและบริการ (&C)..." if is_th else "&Contact & Support...")
+                self.act_contact.setStatusTip("ข้อมูลติดต่อทีมพัฒนา" if is_th else "Contact support and development team")
 
         # 6. Toolbar button
         if hasattr(self, "btn_tb_translate") and self.btn_tb_translate:
@@ -2603,7 +3136,7 @@ class TBTWMainWindow(QMainWindow):
         
         # 4. Sunken Banner Label (Panel1 ใน Delphi: BevelInner=bvLowered)
         banner_frame = QFrame()
-        banner_frame.setAccessibleName("ป้ายชื่อโปรแกรม SiamBraille 3.0")
+        banner_frame.setAccessibleName("ป้ายชื่อโปรแกรม SiamBraille 1.0")
         banner_frame.setStyleSheet("""
             QFrame {
                 background-color: #f0f0f0;
@@ -2616,8 +3149,8 @@ class TBTWMainWindow(QMainWindow):
         banner_layout = QHBoxLayout(banner_frame)
         banner_layout.setContentsMargins(4, 1, 4, 1)
         
-        lbl_version = QLabel("SiamBraille 3.0")
-        lbl_version.setAccessibleName("SiamBraille 3.0")
+        lbl_version = QLabel("SiamBraille 1.0")
+        lbl_version.setAccessibleName("SiamBraille 1.0")
         lbl_version.setStyleSheet("""
             QLabel {
                 font-weight: bold;
@@ -2734,9 +3267,10 @@ class TBTWMainWindow(QMainWindow):
                 
             # แยกคำภาษาไทยเพื่อให้ตัดบรรทัดตรงขอบคำพอดีเหมือน Delphi TBTW
             tokens = []
-            if getattr(self, 'thai_tokenizer', None) is not None:
+            tokenizer = getattr(self, 'thai_tokenizer', None)
+            if tokenizer is not None and hasattr(tokenizer, 'word_tokenize'):
                 try:
-                    tokens = self.thai_tokenizer.word_tokenize(in_line)
+                    tokens = tokenizer.word_tokenize(in_line)
                 except Exception:
                     tokens = []
             elif pythainlp is not None:
@@ -2875,6 +3409,11 @@ class TBTWMainWindow(QMainWindow):
         return thai_display, braille_unicode_display, total_pages, lines_in_last
 
     def action_translate(self):
+        mgr = license_guard.global_license_manager
+        if not mgr.is_licensed and getattr(mgr, "is_trial_expired", False):
+            self.show_trial_expired_dialog()
+            return
+
         raw_text = self.txt_normal.toPlainText()
         is_th = getattr(self, "current_lang", "th") == "th"
         if not raw_text.strip():
@@ -3399,6 +3938,7 @@ class TBTWMainWindow(QMainWindow):
             self.lbl_status_msg.setText("สลับไปยังกล่องข้อมูลเดิม (Normal Font)")
 
     def open_page_setting(self):
+        speak_nvda("เปิดหน้าต่างตั้งค่าหน้ากระดาษเบรลล์ Print Setup", interrupt=True)
         dlg = PageSettingDialog(self, self.line_length, self.page_length)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self.line_length, self.page_length = dlg.get_settings()
@@ -3408,7 +3948,9 @@ class TBTWMainWindow(QMainWindow):
             self.lbl_col_limit.setAccessibleName(f"ความกว้างคอลัมน์ต่อบรรทัด: {self.line_length}")
             self.lbl_line_limit.setAccessibleName(f"ความยาวบรรทัดต่อหน้า: {self.page_length}")
             self.on_text_changed()
-            self.lbl_status_msg.setText(f"ตั้งค่าหน้ากระดาษ: บรรทัดละ {self.line_length} คอลัมน์, หน้าละ {self.page_length} บรรทัด")
+            msg = f"ตั้งค่าหน้ากระดาษสำเร็จ: บรรทัดละ {self.line_length} เซลล์, หน้าละ {self.page_length} บรรทัด"
+            self.lbl_status_msg.setText(msg)
+            speak_nvda(msg, interrupt=True)
             
             # บันทึกลง SiamBraille.def
             try:
@@ -3438,6 +3980,86 @@ class TBTWMainWindow(QMainWindow):
                 self.set_status_message("แทรกภาพจุดเบรลล์นูนสัมผัสลงในเอกสารสำเร็จ")
                 speak_nvda("แทรกภาพจุดเบรลล์นูนสัมผัสลงในเอกสารสำเร็จ")
 
+    def open_dot_converter_dialog(self):
+        """เปิดเครื่องมือแปลงเป็นเลขตำแหน่งจุดเบรลล์ 1-6 (Ctrl+Shift+D)"""
+        initial_text = ""
+        focused_widget = QApplication.focusWidget()
+        target_edit = self.txt_normal
+        if focused_widget == self.txt_braille:
+            target_edit = self.txt_braille
+            cursor = self.txt_braille.textCursor()
+            if cursor.hasSelection():
+                initial_text = cursor.selectedText()
+        else:
+            cursor = self.txt_normal.textCursor()
+            if cursor.hasSelection():
+                initial_text = cursor.selectedText()
+
+        dlg = BrailleDotConverterDialog(self, initial_text=initial_text, translator=self.translator)
+        speak_nvda("เปิดเครื่องมือแปลงเป็นเลขจุดเบรลล์ 1 ถึง 6")
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            result = dlg.get_result()
+            if result:
+                target_edit.insertPlainText(result)
+                self.set_status_message("แทรกผลลัพธ์เลขจุดเบรลล์ลงในเอกสารแล้ว")
+                speak_nvda("แทรกผลลัพธ์เลขจุดเบรลล์ลงในเอกสารแล้ว")
+
+    def open_remote_input_dialog(self):
+        """เปิดหน้าต่างระบบพิมพ์ผ่านมือถือในวง LAN (Ctrl+Shift+W)"""
+        try:
+            from lan_companion import LANCompanionServer, RemoteInputDialog
+            server = self.lan_server
+            if server is None:
+                new_server = LANCompanionServer(port=8080)
+                new_server.signals.text_received.connect(self.on_remote_text_received)
+                started = new_server.start()
+                if not started:
+                    QMessageBox.warning(self, "เซิร์ฟเวอร์", "ไม่สามารถเริ่มเซิร์ฟเวอร์ในวง LAN ได้ พอร์ตอาจถูกใช้งานอยู่")
+                    return
+                self.lan_server = new_server
+                server = new_server
+            
+            if server is not None:
+                dlg = RemoteInputDialog(self, server)
+                dlg.exec()
+        except Exception as e:
+            QMessageBox.warning(self, "ข้อผิดพลาด", f"ไม่สามารถเปิดระบบพิมพ์ผ่านอุปกรณ์อื่นได้: {e}")
+
+    def on_remote_text_received(self, text: str, mode: str = "append"):
+        """รับข้อความที่ส่งมาจากมือถือในวง LAN และแทรกลงในกล่องข้อความทันที"""
+        if not text:
+            return
+        if mode == "append":
+            cur = self.txt_normal.toPlainText()
+            if cur and not cur.endswith('\n') and not cur.endswith(' '):
+                self.txt_normal.appendPlainText(text)
+            else:
+                self.txt_normal.insertPlainText(text)
+        elif mode == "replace":
+            self.txt_normal.setPlainText(text)
+        else:
+            self.txt_normal.insertPlainText(text)
+
+        preview = text.replace('\n', ' ')
+        if len(preview) > 35:
+            preview = preview[:35] + "..."
+        self.set_status_message(f"ได้รับข้อความจากมือถือ: {preview}")
+        speak_nvda(f"ได้รับข้อความจากมือถือแล้ว: {text}")
+
+    def closeEvent(self, event):
+        """ปิดการทำงานของ Background Server อย่างปลอดภัยเมื่อปิดหน้าต่าง"""
+        server = getattr(self, 'lan_server', None)
+        if server is not None and hasattr(server, 'stop'):
+            try:
+                server.stop()
+            except Exception:
+                pass
+        super().closeEvent(event)
+
+    def show_trial_expired_dialog(self):
+        """แสดงหน้าต่างแจ้งเตือนเมื่อหมดอายุทดลองใช้ 14 วัน"""
+        dlg = TrialExpiredDialog(self)
+        dlg.exec()
 
     def show_buy_license(self):
         dlg = LicensePurchaseDialog(self)
@@ -3487,13 +4109,25 @@ class TBTWMainWindow(QMainWindow):
 
 
 def main():
+    # กำหนด AppUserModelID เพื่อให้ Windows 10/11 Taskbar แสดงไอคอนเฉพาะของ SiamBraille แทน Generic Python/Host Icon
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PhenphetK.SiamBraille.Professional.1.0")
+    except Exception:
+        pass
+
     app = QApplication(sys.argv)
+    app_icon = get_main_app_icon()
+    if not app_icon.isNull():
+        app.setWindowIcon(app_icon)
+
     style = QStyleFactory.create("windowsvista") or QStyleFactory.create("windows") or QStyleFactory.create("Fusion")
     if style:
         app.setStyle(style)
         
     window = TBTWMainWindow()
-    window.show()
+    if not app_icon.isNull():
+        window.setWindowIcon(app_icon)
+    window.showMaximized()
     window.raise_()
     window.activateWindow()
     sys.exit(app.exec())

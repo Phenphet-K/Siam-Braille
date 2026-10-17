@@ -33,6 +33,11 @@ Source: "G:\TBTW\dist\SiamBraille\*"; DestDir: "{app}"; Flags: ignoreversion rec
 ; Register SimBraille Font
 Source: "G:\TBTW\dist\SiamBraille\assets\fonts\SIMBRL.TTF"; DestDir: "{autofonts}"; FontInstall: "SimBraille"; Flags: onlyifdoesntexist uninsneveruninstall
 
+[Registry]
+; บันทึกหลักฐานสิทธิ์ทดลองใช้ระดับเครื่อง (Machine-level) ป้องกันการถอนการติดตั้งแล้วลงใหม่เพื่อรีเซ็ตวันทดลอง
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\.sb_state"; ValueType: string; ValueName: "SecInstallTag"; ValueData: "{#MyAppVersion}"; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\.sb_state"; ValueType: string; ValueName: "SecInstallTag"; ValueData: "{#MyAppVersion}"; Flags: createvalueifdoesntexist
+
 [Icons]
 Name: "{group}\{#MyAppName} 1.0"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icons\SiamBraille.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"

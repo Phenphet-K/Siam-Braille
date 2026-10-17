@@ -68,8 +68,8 @@ def create_stripe_checkout(
     if not cancel_url:
         cancel_url = "https://siam-braille.web.app/#pricing"
 
-    session = stripe.checkout.Session.create(
-        line_items=[{
+    session_params: Dict[str, Any] = {
+        "line_items": [{
             "price_data": {
                 "currency": "thb",
                 "product_data": {
@@ -81,10 +81,9 @@ def create_stripe_checkout(
             },
             "quantity": 1,
         }],
-        mode="payment",
-        invoice_creation={"enabled": True},  # ออกใบเสร็จรับเงินทางการอัตโนมัติ
-        customer_email=cust_email if cust_email and "@" in cust_email else None,
-        metadata={
+        "mode": "payment",
+        "invoice_creation": {"enabled": True},  # ออกใบเสร็จรับเงินทางการอัตโนมัติ
+        "metadata": {
             "plan_id": plan_id,
             "cust_name": cust_name,
             "cust_email": cust_email,
@@ -92,9 +91,14 @@ def create_stripe_checkout(
             "cust_org": cust_org,
             "max_devices": str(max_devices)
         },
-        success_url=success_url,
-        cancel_url=cancel_url
-    )
+        "success_url": success_url,
+        "cancel_url": cancel_url
+    }
+
+    if cust_email and "@" in cust_email:
+        session_params["customer_email"] = cust_email
+
+    session = stripe.checkout.Session.create(**session_params)
 
     return {
         "status": "success",
@@ -136,11 +140,20 @@ def verify_and_fulfill_checkout(session_id: str) -> Dict[str, Any]:
 
     if not receipt_url and session.payment_intent:
         try:
-            if hasattr(session.payment_intent, "latest_charge") and session.payment_intent.latest_charge:
-                ch = stripe.Charge.retrieve(session.payment_intent.latest_charge)
-                receipt_url = ch.receipt_url
-            elif hasattr(session.payment_intent, "charges") and session.payment_intent.charges.data:
-                receipt_url = session.payment_intent.charges.data[0].receipt_url
+            pi = session.payment_intent
+            if isinstance(pi, str):
+                pi = stripe.PaymentIntent.retrieve(pi)
+
+            latest_charge = getattr(pi, "latest_charge", None)
+            if isinstance(latest_charge, str):
+                ch = stripe.Charge.retrieve(latest_charge)
+                receipt_url = getattr(ch, "receipt_url", None)
+            elif latest_charge is not None:
+                receipt_url = getattr(latest_charge, "receipt_url", None)
+            else:
+                charges = getattr(pi, "charges", None)
+                if charges and getattr(charges, "data", None):
+                    receipt_url = getattr(charges.data[0], "receipt_url", None)
         except Exception:
             pass
 
@@ -167,9 +180,14 @@ def verify_and_fulfill_checkout(session_id: str) -> Dict[str, Any]:
             }
 
     # ออก License Key ใหม่
-    metadata = session.metadata or {}
-    plan_id = metadata.get("plan_id", "personal")
-    cust_name = metadata.get("cust_name", "Customer")
+    raw_metadata = session.metadata
+    metadata: Dict[str, Any] = (
+        raw_metadata.to_dict()
+        if hasattr(raw_metadata, "to_dict")
+        else (dict(raw_metadata) if isinstance(raw_metadata, dict) else {})
+    )
+    plan_id = str(metadata.get("plan_id", "personal"))
+    cust_name = str(metadata.get("cust_name", "Customer"))
     cust_email = metadata.get("cust_email", "") or (session.customer_details.email if session.customer_details else "")
     cust_phone = metadata.get("cust_phone", "")
     cust_org = metadata.get("cust_org", "สั่งซื้อผ่าน Stripe")

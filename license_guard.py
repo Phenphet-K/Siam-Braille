@@ -180,7 +180,37 @@ class LicenseManager:
         self.status_message = "ยังไม่ได้เปิดใช้งาน (Unregistered)"
         self.license_file_path = ""
         
+        # 1. ตรวจสอบลิขสิทธิ์จริงก่อน
         self.check_local_license()
+
+        # 2. ตรวจสอบสิทธิ์ทดลองใช้ฟรี 14 วัน (หากยังไม่มีลิขสิทธิ์ถาวร)
+        try:
+            import trial_guard
+            self.trial = trial_guard.global_trial_manager
+            self.trial.verify_and_update()
+            if not self.is_licensed:
+                if self.trial.is_trial_active:
+                    self.status_message = f"ทดลองใช้ฟรี: เหลืออีก {self.trial.days_remaining} วัน (วันที่ {self.trial.day_number}/14)"
+                elif self.trial.is_expired:
+                    self.status_message = self.trial.status_message
+        except Exception:
+            self.trial = None
+
+    @property
+    def is_trial(self) -> bool:
+        return not self.is_licensed and (self.trial is not None and self.trial.is_trial_active)
+
+    @property
+    def is_trial_expired(self) -> bool:
+        return not self.is_licensed and (self.trial is not None and self.trial.is_expired)
+
+    @property
+    def trial_days_remaining(self) -> int:
+        return self.trial.days_remaining if self.trial else 0
+
+    @property
+    def trial_day_number(self) -> int:
+        return self.trial.day_number if self.trial else 1
 
     def get_candidate_paths(self) -> list:
         paths = []

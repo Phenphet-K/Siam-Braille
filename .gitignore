@@ -37,3 +37,6 @@ stderr.txt
 .vscode/
 .idea/
 .system_generated/
+.firebase/
+scratch/
+tools/decompile/

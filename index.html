@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SiamBraille 1.0 — โปรแกรมแปลอักษรเบรลล์ไทย มาตรฐาน พ.ศ. 2564</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
     :root {
@@ -32,17 +35,18 @@
       transition: all 0.2s;
       margin: 16px 0;
     }
-    .slip-upload-area:hover, .slip-upload-area.dragover {
+
+    .slip-upload-area:hover,
+    .slip-upload-area.dragover {
       border-color: var(--accent-cyan);
       background: rgba(6, 182, 212, 0.1);
     }
-      --accent-blue: #3b82f6;
-      --accent-indigo: #6366f1;
-      --accent-emerald: #10b981;
-      --accent-gold: #f59e0b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+
+    @keyframes popupIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
+
 
     * {
       box-sizing: border-box;
@@ -53,7 +57,7 @@
 
     body {
       background-color: var(--bg-dark);
-      background-image: 
+      background-image:
         radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.18) 0px, transparent 45%),
         radial-gradient(at 100% 30%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
         radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
@@ -175,8 +179,15 @@
     }
 
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
-      50% { box-shadow: 0 0 25px rgba(6, 182, 212, 0.45); }
+
+      0%,
+      100% {
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+      }
+
+      50% {
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.45);
+      }
     }
 
     .hero-title {
@@ -286,8 +297,13 @@
     }
 
     @media (max-width: 768px) {
-      .demo-grid { grid-template-columns: 1fr; }
-      .hero-title { font-size: 32px; }
+      .demo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 32px;
+      }
     }
 
     .input-box {
@@ -496,7 +512,10 @@
     .modal-backdrop {
       display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(8px);
       z-index: 1000;
@@ -621,8 +640,251 @@
       color: var(--text-muted);
       font-size: 13px;
     }
+
+    /* =========================================================
+       Mobile & Tablet Responsive System (UX Optimization)
+       ========================================================= */
+    @media (max-width: 992px) {
+      .container {
+        padding: 0 20px;
+      }
+
+      .hero {
+        padding: 60px 0 40px;
+      }
+
+      .hero-title {
+        font-size: 38px;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .pricing-card.popular {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      /* Navbar Mobile */
+      .navbar {
+        padding: 14px 0;
+      }
+
+      .navbar .container {
+        flex-direction: column;
+        gap: 14px;
+        align-items: stretch !important;
+      }
+
+      .brand-logo {
+        justify-content: center;
+      }
+
+      .brand-name {
+        font-size: 20px;
+      }
+
+      .nav-links {
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+      }
+
+      .nav-links li:last-child {
+        width: 100%;
+        text-align: center;
+        margin-top: 4px;
+      }
+
+      .nav-links li:last-child a {
+        display: block;
+        width: 100%;
+        padding: 10px 16px;
+      }
+
+      /* Hero Mobile */
+      .hero {
+        padding: 40px 0 30px;
+      }
+
+      .hero-badge {
+        font-size: 11px;
+        padding: 6px 12px;
+        line-height: 1.4;
+      }
+
+      .hero-title {
+        font-size: 28px;
+        line-height: 1.3;
+      }
+
+      .hero-subtitle {
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 28px;
+      }
+
+      .hero-cta {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 36px;
+      }
+
+      .btn-primary, .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 20px;
+        font-size: 15px;
+      }
+
+      /* Live Demo Mobile */
+      .demo-card {
+        padding: 18px 14px;
+        border-radius: 16px;
+      }
+
+      .demo-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .demo-title {
+        font-size: 14px;
+      }
+
+      .demo-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .input-box, .braille-output-box {
+        height: 120px;
+        font-size: 14px;
+      }
+
+      .braille-output-box {
+        font-size: 18px;
+        letter-spacing: 1.5px;
+      }
+
+      /* Features Mobile */
+      .features-section, .pricing-section {
+        padding: 50px 0;
+      }
+
+      .section-header {
+        margin-bottom: 36px;
+      }
+
+      .section-title {
+        font-size: 24px;
+      }
+
+      .section-sub {
+        font-size: 14px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .feature-card {
+        padding: 20px 18px;
+      }
+
+      /* Pricing Mobile */
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .pricing-card {
+        padding: 28px 20px;
+      }
+
+      .popular-tag {
+        top: -12px;
+        right: 18px;
+        font-size: 11px;
+        padding: 3px 10px;
+      }
+
+      .plan-price {
+        font-size: 34px;
+      }
+
+      /* Modal Mobile */
+      .modal-backdrop {
+        padding: 10px;
+        align-items: flex-end;
+      }
+
+      .checkout-modal {
+        padding: 22px 18px;
+        border-radius: 20px 20px 10px 10px;
+        max-height: 92vh;
+      }
+
+      .modal-head h3 {
+        font-size: 17px !important;
+      }
+
+      .promptpay-box {
+        padding: 16px 12px;
+        margin: 14px 0;
+      }
+
+      .qr-container {
+        width: 180px;
+        height: 180px;
+      }
+
+      .amount-display {
+        font-size: 24px;
+      }
+
+      .key-reveal-box {
+        font-size: 16px;
+        padding: 12px;
+        word-break: break-all;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .hero-title {
+        font-size: 24px;
+      }
+
+      .brand-name {
+        font-size: 18px;
+      }
+
+      .qr-container {
+        width: 160px;
+        height: 160px;
+      }
+    }
   </style>
 </head>
+
 <body>
 
   <!-- Top Navbar -->
@@ -636,7 +898,8 @@
         <li><a href="#features">ฟีเจอร์หลัก</a></li>
         <li><a href="#demo">ทดลองแปลสด</a></li>
         <li><a href="#pricing">แพ็กเกจราคา</a></li>
-        <li><a href="#pricing" class="btn-primary" style="padding: 8px 18px; font-size: 13px;">ดาวน์โหลด / สั่งซื้อ</a></li>
+        <li><a href="#pricing" class="btn-primary" style="padding: 8px 18px; font-size: 13px;">ดาวน์โหลด / สั่งซื้อ</a>
+        </li>
       </ul>
     </div>
   </nav>
@@ -649,7 +912,8 @@
       </div>
       <h1 class="hero-title">โปรแกรมแปลอักษรเบรลล์ไทย<br>มาตรฐานสากลแห่งอนาคต</h1>
       <p class="hero-subtitle">
-        แม่นยำ รวดเร็ว แปลตรงตามหลักวิชาการ 100% ควบคุม 30 เซลล์ต่อบรรทัด และ 25 บรรทัดต่อหน้าอย่างสมบูรณ์แบบ รองรับโปรแกรมอ่านจอภาพ NVDA และสั่งพิมพ์ออกเครื่องพิมพ์เบรลล์ได้ทันที
+        แม่นยำ รวดเร็ว แปลตรงตามหลักวิชาการ 100% ควบคุม 30 เซลล์ต่อบรรทัด และ 25 บรรทัดต่อหน้าอย่างสมบูรณ์แบบ
+        รองรับโปรแกรมอ่านจอภาพ NVDA และสั่งพิมพ์ออกเครื่องพิมพ์เบรลล์ได้ทันที
       </p>
       <div class="hero-cta">
         <a href="/api/download/setup" class="btn-primary" id="btnDownloadHero">
@@ -670,12 +934,16 @@
         </div>
         <div class="demo-grid">
           <div>
-            <label style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">พิมพ์ข้อความภาษาไทยที่นี่:</label>
-            <textarea class="input-box" id="demoInput" oninput="translateDemo()" placeholder="พิมพ์ภาษาไทย เช่น สวัสดีครับ ยินดีต้อนรับสู่ SiamBraille 1.0">สวัสดีครับ ยินดีต้อนรับสู่โปรแกรม SiamBraille 1.0</textarea>
+            <label
+              style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">พิมพ์ข้อความภาษาไทยที่นี่:</label>
+            <textarea class="input-box" id="demoInput" oninput="translateDemo()"
+              placeholder="พิมพ์ภาษาไทย เช่น สวัสดีครับ ยินดีต้อนรับสู่ SiamBraille 1.0">สวัสดีครับ ยินดีต้อนรับสู่โปรแกรมสยามเบรลล์</textarea>
           </div>
           <div>
-            <label style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">ผลการแปลงเป็นอักษรเบรลล์ 6 จุด (Braille Unicode Cells):</label>
-            <div class="braille-output-box" id="demoOutput">⠎⠺⠢⠎⠙⠦⠅⠗⠢⠃ ⠽⠊⠝⠙⠦⠞⠬⠕⠝⠗⠢⠃⠎⠪⠦⠹⠩⠵⠤⠱⠵⠐ ⠼⠁⠲⠚</div>
+            <label
+              style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">ผลการแปลงเป็นอักษรเบรลล์
+              6 จุด (Braille Unicode Cells):</label>
+            <div class="braille-output-box" id="demoOutput">⠎⠺⠢⠎⠙⠦⠅⠗⠢⠃ ⠽⠊⠝⠙⠦⠞⠦⠕⠝⠗⠢⠃⠎⠥⠂⠹⠏⠗⠣⠅⠗⠍⠎⠽⠤⠍⠱⠃⠗⠇⠇⠠</div>
           </div>
         </div>
       </div>
@@ -694,25 +962,29 @@
         <div class="feature-card">
           <div class="feature-icon">📚</div>
           <h3>มาตรฐาน พ.ศ. 2564</h3>
-          <p>ปฏิบัติตามคู่มือการใช้อักษรเบรลล์ไทย ฉบับปี 2564 ครบถ้วน ทั้งคำควบกล้ำ อักษรนำ คำย่อ สระพิเศษ และเครื่องหมายวรรคตอน</p>
+          <p>ปฏิบัติตามคู่มือการใช้อักษรเบรลล์ไทย ฉบับปี 2564 ครบถ้วน ทั้งคำควบกล้ำ อักษรนำ คำย่อ สระพิเศษ
+            และเครื่องหมายวรรคตอน</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">📐</div>
           <h3>30 เซลล์ x 25 บรรทัด</h3>
-          <p>ล็อกระยะหน้ากระดาษพิมพ์เบรลล์เป๊ะ ไม่มีการล้นขอบกระดาษ พร้อมระบบจัดเลขหน้าและจัดคำต่อบรรทัดอย่างเป็นระเบียบ</p>
+          <p>ล็อกระยะหน้ากระดาษพิมพ์เบรลล์เป๊ะ ไม่มีการล้นขอบกระดาษ พร้อมระบบจัดเลขหน้าและจัดคำต่อบรรทัดอย่างเป็นระเบียบ
+          </p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🔊</div>
           <h3>NVDA Screen Reader</h3>
-          <p>มี Bridge สำหรับเชื่อมต่อเสียงอ่านจอภาพ NVDA บิลท์อินในตัวโปรแกรม ผู้มีสายตาเลือนรางสามารถใช้งานแป้นพิมพ์ลัดได้สะดวก 100%</p>
+          <p>มี Bridge สำหรับเชื่อมต่อเสียงอ่านจอภาพ NVDA บิลท์อินในตัวโปรแกรม
+            ผู้มีสายตาเลือนรางสามารถใช้งานแป้นพิมพ์ลัดได้สะดวก 100%</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🖨️</div>
           <h3>รองรับ Embosser ทุกยี่ห้อ</h3>
-          <p>สั่งพิมพ์ผ่านไดรเวอร์ Windows หรือสั่งพิมพ์ตรงผ่านคำสั่งเครื่องพิมพ์เบรลล์ (Direct Braille ESC/P) ได้อย่างไร้รอยต่อ</p>
+          <p>สั่งพิมพ์ผ่านไดรเวอร์ Windows หรือสั่งพิมพ์ตรงผ่านคำสั่งเครื่องพิมพ์เบรลล์ (Direct Braille ESC/P)
+            ได้อย่างไร้รอยต่อ</p>
         </div>
       </div>
     </div>
@@ -754,7 +1026,8 @@
             <li>อัปเดตตารางและคำศัพท์เบรลล์ฟรี</li>
             <li>ออกรหัสคีย์และใช้งานได้ทันที</li>
           </ul>
-          <button class="btn-primary" style="justify-content: center;" onclick="openCheckout('personal', 'บุคคลทั่วไป (Personal Lifetime)', 1290, 1)">
+          <button class="btn-primary" style="justify-content: center;"
+            onclick="openCheckout('personal', 'บุคคลทั่วไป (Personal Lifetime)', 1290, 1)">
             💳 สั่งซื้อทันที (พร้อมเพย์)
           </button>
         </div>
@@ -771,7 +1044,9 @@
             <li>บริการแนะนำการตั้งค่าเครื่องพิมพ์เบรลล์</li>
             <li>ทีมสนับสนุนทางเทคนิคเฉพาะทาง</li>
           </ul>
-          <button class="btn-primary" style="justify-content: center; background: linear-gradient(135deg, #4f46e5, #7c3aed);" onclick="openCheckout('education', 'สถานศึกษา / องค์กร (5 เครื่อง)', 4900, 5)">
+          <button class="btn-primary"
+            style="justify-content: center; background: linear-gradient(135deg, #4f46e5, #7c3aed);"
+            onclick="openCheckout('education', 'สถานศึกษา / องค์กร (5 เครื่อง)', 4900, 5)">
             🏫 สั่งซื้อสำหรับสถานศึกษา
           </button>
         </div>
@@ -809,19 +1084,27 @@
           <input type="email" id="cust_email" class="form-control" placeholder="เช่น yourname@gmail.com" required>
         </div>
 
-        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
-          ดำเนินการชำระเงิน (ไปยัง QR พร้อมเพย์) →
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px;">
+          <button type="button" class="btn-primary" id="btnStripePay" onclick="payWithStripe(event)"
+            style="width: 100%; justify-content: center; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);">
+            💳 ชำระผ่านบัตรเครดิต / เดบิต (Stripe Checkout) →
+          </button>
+          <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center;">
+            📱 หรือ ชำระผ่าน QR พร้อมเพย์ (แนบสลิป) →
+          </button>
+        </div>
       </form>
 
       <!-- Step 2: PromptPay Payment Screen (Initially Hidden) -->
       <div id="paymentScreen" style="display: none;">
         <div class="promptpay-box">
-          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">สแกนเพื่อชำระเงินผ่านแอปธนาคารทุกแห่ง (PromptPay)</div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            สแกนเพื่อชำระเงินผ่านแอปธนาคารทุกแห่ง (PromptPay)</div>
           <div class="amount-display" id="payAmountDisplay">1,290.00 บาท</div>
-          
+
           <div class="qr-container">
-            <img id="promptpayQrImg" src="" alt="PromptPay QR Code" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+            <img id="promptpayQrImg" src="" alt="PromptPay QR Code"
+              style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
           </div>
 
           <div style="font-size: 13px; color: #cbd5e1; margin-top: 8px;">
@@ -832,7 +1115,8 @@
 
         <!-- Mini QR Slip Upload Dropzone -->
         <div class="slip-upload-area" id="slipDropArea" onclick="document.getElementById('slipFileInput').click()">
-          <input type="file" id="slipFileInput" accept="image/*" style="display:none;" onchange="handleSlipFile(this.files[0])">
+          <input type="file" id="slipFileInput" accept="image/*" style="display:none;"
+            onchange="handleSlipFile(this.files[0])">
           <div id="slipUploadPrompt">
             <div style="font-size: 32px; margin-bottom: 6px;">📤</div>
             <div style="font-size: 14px; font-weight: 600; color: #38bdf8;">คลิกหรือลากสลิปโอนเงินมาวางที่นี่</div>
@@ -844,23 +1128,28 @@
             <div style="font-size: 24px; animation: spin 1s infinite linear;">⚙️</div>
             <div style="font-size: 13px; color: #38bdf8; margin-top: 6px;">กำลังอ่าน Mini QR บนสลิป...</div>
           </div>
-          <div id="slipResultBox" style="display: none; text-align: left; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 12px; padding: 14px; margin-top: 10px;">
-            <div style="color: #34d399; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+          <div id="slipResultBox"
+            style="display: none; text-align: left; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 12px; padding: 14px; margin-top: 10px;">
+            <div
+              style="color: #34d399; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 18px;">✅</span> ตรวจพบสลิปธนาคารแท้ (Mini QR Verified)
             </div>
             <div style="font-size: 13px; color: #f1f5f9; margin-top: 8px; line-height: 1.6;">
               🏦 <strong>ธนาคาร:</strong> <span id="slipBankName" style="color: #38bdf8;">-</span><br>
-              🔖 <strong>รหัสธุรกรรม (TransRef):</strong> <span id="slipTransRef" style="font-family: monospace; color: #fbbf24; font-weight: 600;">-</span>
+              🔖 <strong>รหัสธุรกรรม (TransRef):</strong> <span id="slipTransRef"
+                style="font-family: monospace; color: #fbbf24; font-weight: 600;">-</span>
             </div>
           </div>
-          <div id="slipErrorBox" style="display: none; text-align: left; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 12px; padding: 12px; margin-top: 10px;">
+          <div id="slipErrorBox"
+            style="display: none; text-align: left; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 12px; padding: 12px; margin-top: 10px;">
             <div style="color: #f87171; font-weight: 600; font-size: 13px;" id="slipErrorMessage">
               ⚠️ ไม่พบ Mini QR บนรูปภาพ กรุณาใช้สลิปที่มี QR Code ชัดเจน
             </div>
           </div>
         </div>
 
-        <button class="btn-primary" style="width: 100%; justify-content: center; opacity: 0.6;" id="btnConfirmPay" onclick="confirmPaymentAndIssueKey()" disabled>
+        <button class="btn-primary" style="width: 100%; justify-content: center; opacity: 0.6;" id="btnConfirmPay"
+          onclick="confirmPaymentAndIssueKey()" disabled>
           🔒 กรุณาแนบสลิปเพื่อตรวจ Mini QR
         </button>
       </div>
@@ -896,7 +1185,151 @@
     </div>
   </footer>
 
+  <!-- Custom Popup / Alert / Confirm Modal (No Native Alerts) -->
+  <div id="appCustomPopupModal" style="display: none; position: fixed; inset: 0; background: rgba(5, 11, 24, 0.75); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: linear-gradient(145deg, rgba(20, 30, 48, 0.95), rgba(15, 23, 42, 0.98)); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 20px; max-width: 440px; width: 100%; padding: 28px 24px 22px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.15); text-align: center; animation: popupIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div id="popupModalIcon" style="font-size: 2.8rem; margin-bottom: 12px; line-height: 1;">⚠️</div>
+      <h3 id="popupModalTitle" style="font-family: 'Chakra Petch', sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 10px;">แจ้งเตือน</h3>
+      <div id="popupModalMessage" style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 22px; white-space: pre-line; word-break: break-word; background: rgba(0,0,0,0.25); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); text-align: left;"></div>
+      <div id="popupModalActions" style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="btnPopupCancel" type="button" style="padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); transition: all 0.2s;">ยกเลิก</button>
+        <button id="btnPopupConfirm" type="button" style="padding: 10px 22px; border-radius: 10px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; box-shadow: 0 4px 14px rgba(37,99,235,0.4); transition: all 0.2s;">ตกลง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-blocking Toast Notification Container -->
+  <div id="appToastContainer" style="position: fixed; top: 24px; right: 24px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
   <script>
+    // Modern Popup Modal & Toast System (No alert() or confirm())
+    function showAppAlert(message, title = 'แจ้งเตือน', icon = 'ℹ️') {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('appCustomPopupModal');
+        const iconEl = document.getElementById('popupModalIcon');
+        const titleEl = document.getElementById('popupModalTitle');
+        const msgEl = document.getElementById('popupModalMessage');
+        const cancelBtn = document.getElementById('btnPopupCancel');
+        const confirmBtn = document.getElementById('btnPopupConfirm');
+
+        if (!modal) {
+          resolve();
+          return;
+        }
+
+        iconEl.textContent = icon;
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        cancelBtn.style.display = 'none';
+        confirmBtn.textContent = 'เข้าใจแล้ว';
+        confirmBtn.style.background = 'linear-gradient(135deg, #0284c7, #2563eb)';
+
+        function onConfirm() {
+          modal.style.display = 'none';
+          confirmBtn.removeEventListener('click', onConfirm);
+          resolve();
+        }
+        confirmBtn.addEventListener('click', onConfirm);
+        modal.style.display = 'flex';
+      });
+    }
+
+    function showAppConfirm(message, title = 'ยืนยันการดำเนินการ', icon = '⚠️', confirmText = 'ตกลง', danger = true) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('appCustomPopupModal');
+        const iconEl = document.getElementById('popupModalIcon');
+        const titleEl = document.getElementById('popupModalTitle');
+        const msgEl = document.getElementById('popupModalMessage');
+        const cancelBtn = document.getElementById('btnPopupCancel');
+        const confirmBtn = document.getElementById('btnPopupConfirm');
+
+        if (!modal) {
+          resolve(true);
+          return;
+        }
+
+        iconEl.textContent = icon;
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        cancelBtn.style.display = 'inline-block';
+        cancelBtn.textContent = 'ยกเลิก';
+        confirmBtn.textContent = confirmText;
+        if (danger) {
+          confirmBtn.style.background = 'linear-gradient(135deg, #dc2626, #b91c1c)';
+        } else {
+          confirmBtn.style.background = 'linear-gradient(135deg, #0284c7, #2563eb)';
+        }
+
+        function onConfirm() {
+          modal.style.display = 'none';
+          cleanup();
+          resolve(true);
+        }
+        function onCancel() {
+          modal.style.display = 'none';
+          cleanup();
+          resolve(false);
+        }
+        function cleanup() {
+          confirmBtn.removeEventListener('click', onConfirm);
+          cancelBtn.removeEventListener('click', onCancel);
+        }
+        confirmBtn.addEventListener('click', onConfirm);
+        cancelBtn.addEventListener('click', onCancel);
+        modal.style.display = 'flex';
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('appToastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        pointer-events: auto;
+        min-width: 260px;
+        max-width: 380px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.92);
+        backdrop-filter: blur(8px);
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        animation: popupIn 0.2s ease-out;
+        transition: all 0.25s ease-out;
+      `;
+      let icon = 'ℹ️';
+      if (type === 'success') {
+        icon = '✅';
+        toast.style.borderColor = 'rgba(34, 197, 94, 0.5)';
+      } else if (type === 'error') {
+        icon = '❌';
+        toast.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+      } else if (type === 'warning') {
+        icon = '⚠️';
+        toast.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+      }
+      toast.innerHTML = `<span style="font-size:1.1rem;">${icon}</span><span style="flex:1;">${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => toast.remove(), 250);
+      }, 3500);
+    }
+
+    // Override default window.alert as safety net
+    window.alert = function(msg) {
+      showAppAlert(msg);
+    };
+
     // Live Braille Simulation Dictionary for Web Demo
     const THAI_BRAILLE_MAP = {
       'ก': '⠅', 'ข': '9', 'ฃ': '⠹', 'ค': '⠅', 'ฅ': '⠹', 'ฆ': '⠅',
@@ -1023,7 +1456,7 @@
       document.getElementById('checkoutPlanTitle').textContent = `สั่งซื้อ: ${planName}`;
       document.getElementById('payAmountDisplay').textContent = `${price.toLocaleString()}.00 บาท`;
       document.getElementById('promptpayIdDisplay').textContent = promptPayTargetId;
-      
+
       // Gen real PromptPay QR Code
       const ppPayload = generatePromptPayPayload(promptPayTargetId, price);
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(ppPayload)}`;
@@ -1051,6 +1484,58 @@
       document.getElementById('checkoutModal').style.display = 'none';
     }
 
+    async function payWithStripe(e) {
+      if (e) e.preventDefault();
+      const form = document.getElementById('orderForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const cust_name = document.getElementById('cust_name').value.trim();
+      const cust_org = document.getElementById('cust_org').value.trim();
+      const cust_phone = document.getElementById('cust_phone').value.trim();
+      const cust_email = document.getElementById('cust_email').value.trim();
+
+      const btn = document.getElementById('btnStripePay');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⏳ กำลังเปิดระบบชำระเงิน Stripe...';
+      btn.disabled = true;
+
+      try {
+        const apiBase = (window.location.port === "8000" || window.location.hostname === "localhost") 
+          ? "" 
+          : "https://siam-braille.web.app";
+
+        const res = await fetch(`${apiBase}/api/checkout/stripe/create-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan_id: currentCheckoutPlan ? currentCheckoutPlan.id : 'personal',
+            cust_name: cust_name,
+            cust_email: cust_email,
+            cust_phone: cust_phone,
+            cust_org: cust_org,
+            success_url: `${window.location.origin}/checkout/success.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${window.location.origin}/#pricing`
+          })
+        });
+
+        const data = await res.json();
+        if (data.status === 'success' && data.checkout_url) {
+          window.location.href = data.checkout_url;
+        } else {
+          showAppAlert("ไม่สามารถเริ่มการชำระเงินกับ Stripe ได้: " + (data.detail || data.message || "เกิดข้อผิดพลาด"), 'ข้อผิดพลาด', '❌');
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showAppAlert("ไม่สามารถติดต่อเซิร์ฟเวอร์ชำระเงินได้: " + err.message, 'ข้อผิดพลาด', '❌');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
     function handleProceedToPay(e) {
       e.preventDefault();
       document.getElementById('orderForm').style.display = 'none';
@@ -1075,9 +1560,9 @@
       errorBox.style.display = 'none';
 
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = function (evt) {
         const img = new Image();
-        img.onload = function() {
+        img.onload = function () {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           canvas.width = img.width;
@@ -1113,7 +1598,7 @@
           // กรณีไม่พบ QR ที่เข้าข่าย Mini QR
           uploadPrompt.style.display = 'block';
           errorBox.style.display = 'block';
-          document.getElementById('slipErrorMessage').textContent = 
+          document.getElementById('slipErrorMessage').textContent =
             '⚠️ ไม่พบ Mini QR ของธนาคารบนรูปภาพ กรุณาตรวจสอบว่าเป็นสลิปการโอนที่มี QR Code ชัดเจน';
           btn.disabled = true;
           btn.style.opacity = '0.6';
@@ -1142,7 +1627,7 @@
 
     async function confirmPaymentAndIssueKey() {
       if (!window.verifiedSlipPayload) {
-        alert('กรุณาแนบสลิปโอนเงินที่มี Mini QR ก่อนดำเนินการ');
+        showAppAlert('กรุณาแนบสลิปโอนเงินที่มี Mini QR ก่อนดำเนินการ', 'แจ้งเตือน', '⚠️');
         return;
       }
 
@@ -1171,14 +1656,15 @@
           const key = typeof data.key === 'object' ? data.key.key : data.key;
           document.getElementById('revealedKey').textContent = key;
           document.getElementById('downloadLicFileBtn').href = `/api/licenses/${key}/download`;
-          
+
           document.getElementById('paymentScreen').style.display = 'none';
           document.getElementById('successScreen').style.display = 'block';
+          showToast('🎉 ออกรหัสลิขสิทธิ์สำเร็จเรียบร้อย!', 'success');
         } else {
-          alert('❌ ตรวจสอบสลิปไม่สำเร็จ:\n' + (data.detail || data.message || 'ข้อมูลสลิปไม่ถูกต้อง'));
+          showAppAlert('ตรวจสอบสลิปไม่สำเร็จ:\n' + (data.detail || data.message || 'ข้อมูลสลิปไม่ถูกต้อง'), 'ตรวจสอบสลิปล้มเหลว', '❌');
         }
       } catch (err) {
-        alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err);
+        showAppAlert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err, 'ข้อผิดพลาด', '❌');
       } finally {
         btn.disabled = false;
         btn.textContent = '✅ ยืนยันสลิปและรับรหัสคีย์ทันที';
@@ -1188,7 +1674,7 @@
     function copyRevealedKey() {
       const key = document.getElementById('revealedKey').textContent.trim();
       navigator.clipboard.writeText(key);
-      alert('คัดลอกรหัสคีย์ ' + key + ' แล้ว!');
+      showToast('📋 คัดลอกรหัสคีย์ ' + key + ' แล้ว', 'success');
     }
 
     // ==========================================
@@ -1252,4 +1738,5 @@
     window.addEventListener('DOMContentLoaded', loadDynamicPricing);
   </script>
 </body>
+
 </html>

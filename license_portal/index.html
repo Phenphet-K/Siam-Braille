@@ -324,6 +324,12 @@
       max-width: 90%;
       padding: 28px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      animation: popupIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popupIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .modal-title {
@@ -373,6 +379,93 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
+    }
+
+    /* Table Responsive Wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile & Tablet Responsive System for Admin Portal */
+    @media (max-width: 900px) {
+      body {
+        padding: 16px 14px;
+      }
+
+      .top-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 18px;
+        margin-bottom: 20px;
+      }
+
+      .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .header-actions button,
+      .header-actions div {
+        flex-grow: 1;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        padding: 16px 18px;
+      }
+
+      .stat-val {
+        font-size: 26px;
+      }
+
+      .table-container {
+        padding: 16px;
+      }
+
+      .table-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input {
+        width: 100%;
+        min-width: unset;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-title {
+        font-size: 20px;
+      }
+
+      .brand-sub {
+        font-size: 12px;
+      }
+
+      .modal-card {
+        padding: 20px 16px;
+        width: 95%;
+      }
     }
   </style>
 </head>
@@ -446,32 +539,175 @@
     </div>
   </div>
 
-  <!-- Table Container -->
-  <div class="table-container">
-    <div class="table-header">
-      <div class="table-title">
-        <span>📋 รายการคีย์และอุปกรณ์ที่ลงทะเบียน</span>
-        <span id="license-count" style="font-size: 13px; color: var(--text-muted);">(0 รายการ)</span>
-      </div>
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 ค้นหาด้วยรหัสคีย์, ชื่อเจ้าของ, หน่วยงาน..." oninput="filterLicenses()">
-    </div>
+  <!-- Tab Navigation -->
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; flex-wrap: wrap;">
+    <button class="btn-secondary admin-tab-btn active" id="btnTabLicenses" onclick="switchAdminTab('licenses')" style="background: rgba(6, 182, 212, 0.2); border-color: var(--accent-cyan); color: #fff;">
+      🔑 รายการคีย์ & เครื่อง (Licenses)
+    </button>
+    <button class="btn-secondary admin-tab-btn" id="btnTabPackages" onclick="switchAdminTab('packages')">
+      📦 จัดการแพ็กเกจ & ราคา (Packages & Pricing)
+    </button>
+    <button class="btn-secondary admin-tab-btn" id="btnTabOrders" onclick="switchAdminTab('orders')">
+      🧾 ประวัติคำสั่งซื้อ & สลิปโอนเงิน (Orders)
+    </button>
+  </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>รหัสคีย์ (License Key)</th>
-          <th>เจ้าของ / หน่วยงาน</th>
-          <th>ประเภท</th>
-          <th>อุปกรณ์ (HWID)</th>
-          <th>หมดอายุ</th>
-          <th>สถานะ</th>
-          <th>จัดการ</th>
-        </tr>
-      </thead>
-      <tbody id="licenseTableBody">
-        <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">กำลังโหลดข้อมูล...</td></tr>
-      </tbody>
-    </table>
+  <!-- TAB 1: Licenses & Devices Table -->
+  <div id="tabContentLicenses">
+    <div class="table-container">
+      <div class="table-header">
+        <div class="table-title">
+          <span>📋 รายการคีย์และอุปกรณ์ที่ลงทะเบียน</span>
+          <span id="license-count" style="font-size: 13px; color: var(--text-muted);">(0 รายการ)</span>
+        </div>
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 ค้นหาด้วยรหัสคีย์, ชื่อเจ้าของ, หน่วยงาน..." oninput="filterLicenses()">
+      </div>
+      <div class="table-responsive">
+        <table>
+        <thead>
+          <tr>
+            <th>รหัสคีย์ (License Key)</th>
+            <th>เจ้าของ / หน่วยงาน</th>
+            <th>ประเภท</th>
+            <th>อุปกรณ์ (HWID)</th>
+            <th>หมดอายุ</th>
+            <th>สถานะ</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="licenseTableBody">
+          <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Packages & Pricing Management -->
+  <div id="tabContentPackages" style="display: none;">
+    <div class="table-container">
+      <div class="table-header">
+        <div>
+          <div class="table-title">
+            <span>📦 ตั้งราคาและจัดการแพ็กเกจโปรแกรม</span>
+          </div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+            กำหนดราคาขาย จำนวนเครื่องที่จำกัดต่อคีย์ (max_devices) และสิทธิพิเศษของแต่ละแพ็กเกจ ข้อมูลจะอัปเดตไปยังหน้าเว็บหลักทันที
+          </div>
+        </div>
+        <button class="btn-primary" onclick="openPackageModal()">+ เพิ่มแพ็กเกจใหม่</button>
+      </div>
+
+      <div id="packagesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 16px;">
+        <div style="color: var(--text-muted); padding: 20px; text-align: center;">กำลังโหลดข้อมูลแพ็กเกจ...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Orders & Slips Table -->
+  <div id="tabContentOrders" style="display: none;">
+    <div class="table-container">
+      <div class="table-header">
+        <div>
+          <div class="table-title">
+            <span>🧾 ประวัติการสั่งซื้อและสลิปที่ตรวจสอบแล้ว (Mini QR Standard)</span>
+          </div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+            รายการชำระเงินที่ระบบถอดรหัส Mini QR (ธปท.) สำเร็จ ตรวจสอบสลิปไม่ซ้ำ และออกคีย์ให้อัตโนมัติ
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="loadOrders()">🔄 รีเฟรชรายการสั่งซื้อ</button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>เวลาที่ทำรายการ</th>
+              <th>ลูกค้า / อีเมล / โทร</th>
+              <th>แพ็กเกจ</th>
+              <th>ยอดเงิน</th>
+              <th>ธนาคาร & เลขอ้างอิงสลิป (TransRef)</th>
+              <th>รหัสคีย์ที่ออกให้</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">กำลังโหลดประวัติคำสั่งซื้อ...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Package Edit/Create Modal -->
+  <div class="modal-backdrop" id="packageModal">
+    <div class="modal-card" style="width: 580px;">
+      <div class="modal-title">
+        <span id="packageModalTitle">⚙️ ตั้งค่าแพ็กเกจและราคา</span>
+        <button class="close-btn" onclick="closePackageModal()">&times;</button>
+      </div>
+
+      <form id="packageForm" onsubmit="handleSavePackage(event)">
+        <input type="hidden" id="pkg_is_edit" value="0">
+        <div class="form-row">
+          <div class="form-group">
+            <label>รหัสแพ็กเกจ (ID ภาษาอังกฤษ ไม่เว้นวรรค) *</label>
+            <input type="text" id="pkg_id" class="form-control" placeholder="เช่น personal, pro2, lab10" required>
+          </div>
+          <div class="form-group">
+            <label>ราคาขาย (บาท THB) *</label>
+            <input type="number" id="pkg_price" class="form-control" placeholder="เช่น 1290" min="0" step="1" required style="font-weight: 700; color: #34d399;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>ชื่อแพ็กเกจ (Package Name) *</label>
+          <input type="text" id="pkg_name" class="form-control" placeholder="เช่น บุคคลทั่วไป (Personal 1 เครื่อง)" required>
+        </div>
+
+        <div class="form-group">
+          <label>คำอธิบายสั้นๆ (Description)</label>
+          <input type="text" id="pkg_desc" class="form-control" placeholder="สำหรับครู, อาจารย์, นักแปลเอกสาร">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>จำกัดจำนวนเครื่องต่อ 1 คีย์ (max_devices) *</label>
+            <input type="number" id="pkg_max_devices" class="form-control" value="1" min="1" max="999" required style="font-weight: 700; color: #38bdf8;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">โปรแกรมจะบล็อกทันทีหากนำคีย์ไปเปิดเครื่องที่เกินจำนวนนี้</div>
+          </div>
+          <div class="form-group">
+            <label>ป้ายกำกับพิเศษ (Badge)</label>
+            <input type="text" id="pkg_badge" class="form-control" placeholder="เช่น ยอดนิยม, ขายดี, แนะนำ">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>ระยะเวลาสิทธิ์ (Period)</label>
+            <input type="text" id="pkg_period" class="form-control" value="ตลอดชีพ" placeholder="ตลอดชีพ หรือ 1 ปี">
+          </div>
+          <div class="form-group">
+            <label>ประเภท (Type)</label>
+            <select id="pkg_type" class="form-control">
+              <option value="lifetime">ถาวรตลอดชีพ (Lifetime)</option>
+              <option value="yearly">รายปี (Yearly)</option>
+              <option value="monthly">รายเดือน (Monthly)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>ฟีเจอร์ของแพ็กเกจ (ใส่บรรทัดละ 1 ข้อ)</label>
+          <textarea id="pkg_features" class="form-control" rows="4" placeholder="สิทธิ์ใช้งานตลอดชีพ&#10;โควต้า 1 เครื่องคอมพิวเตอร์&#10;ย้ายเครื่องได้เมื่อเปลี่ยนคอมพิวเตอร์ใหม่&#10;อัปเดตตารางเบรลล์ฟรี"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" class="btn-secondary" onclick="closePackageModal()">ยกเลิก</button>
+          <button type="submit" class="btn-primary" id="btnSubmitPackage">💾 บันทึกแพ็กเกจ</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Create Key Modal -->
@@ -523,6 +759,22 @@
   </div>
   </div> <!-- End of dashboardSection -->
 
+  <!-- Global App Custom Popup Modal (Alert / Confirm) -->
+  <div class="modal-backdrop" id="appCustomPopupModal" style="z-index: 9999;">
+    <div class="modal-card" style="width: 460px; text-align: center; border: 1.5px solid rgba(56, 189, 248, 0.4); box-shadow: 0 25px 60px rgba(0,0,0,0.85); background: #0f172a; padding: 26px 24px;">
+      <div id="popupIcon" style="font-size: 40px; margin-bottom: 10px; line-height: 1;">⚠️</div>
+      <h3 id="popupTitle" style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #f8fafc; font-family: 'Chakra Petch', sans-serif;">ยืนยันการดำเนินการ</h3>
+      <div id="popupMessage" style="font-size: 13.5px; color: #cbd5e1; line-height: 1.6; margin-bottom: 22px; white-space: pre-wrap; word-break: break-word; text-align: left; background: rgba(0,0,0,0.35); padding: 14px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); max-height: 260px; overflow-y: auto;"></div>
+      <div id="popupButtons" style="display: flex; gap: 12px; justify-content: center;">
+        <button id="btnPopupCancel" class="btn-secondary" style="min-width: 105px; padding: 10px 20px; font-weight: 600;">ยกเลิก</button>
+        <button id="btnPopupConfirm" class="btn-primary" style="min-width: 105px; padding: 10px 20px; font-weight: 600;">ตกลง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="appToastContainer" style="position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
   <script>
     const firebaseConfig = {
       projectId: "siam-braille",
@@ -547,6 +799,129 @@
     } catch (err) {
       console.warn('Firebase init:', err);
     }
+
+    // ==========================================
+    // Modern Popup Modal & Toast System (No alert() or confirm())
+    // ==========================================
+    function showAppAlert(message, title = 'แจ้งเตือน', icon = 'ℹ️') {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('appCustomPopupModal');
+        const icn = document.getElementById('popupIcon');
+        const ttl = document.getElementById('popupTitle');
+        const msg = document.getElementById('popupMessage');
+        const btnCancel = document.getElementById('btnPopupCancel');
+        const btnConfirm = document.getElementById('btnPopupConfirm');
+
+        icn.textContent = icon;
+        ttl.textContent = title;
+        msg.textContent = message;
+        btnCancel.style.display = 'none';
+        btnConfirm.textContent = 'ตกลง';
+        btnConfirm.style.background = 'linear-gradient(135deg, #0284c7, #2563eb)';
+        btnConfirm.style.borderColor = 'transparent';
+
+        modal.style.display = 'flex';
+
+        function onConfirm() {
+          btnConfirm.removeEventListener('click', onConfirm);
+          modal.style.display = 'none';
+          resolve(true);
+        }
+        btnConfirm.addEventListener('click', onConfirm, { once: true });
+      });
+    }
+
+    function showAppConfirm(message, title = 'ยืนยันการดำเนินการ', icon = '⚠️', confirmText = 'ตกลง', danger = true) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('appCustomPopupModal');
+        const icn = document.getElementById('popupIcon');
+        const ttl = document.getElementById('popupTitle');
+        const msg = document.getElementById('popupMessage');
+        const btnCancel = document.getElementById('btnPopupCancel');
+        const btnConfirm = document.getElementById('btnPopupConfirm');
+
+        icn.textContent = icon;
+        ttl.textContent = title;
+        msg.textContent = message;
+        btnCancel.style.display = 'inline-flex';
+        btnCancel.textContent = 'ยกเลิก';
+        btnConfirm.textContent = confirmText;
+
+        if (danger) {
+          btnConfirm.style.background = 'linear-gradient(135deg, #dc2626, #b91c1c)';
+          btnConfirm.style.borderColor = '#ef4444';
+        } else {
+          btnConfirm.style.background = 'linear-gradient(135deg, #0284c7, #2563eb)';
+          btnConfirm.style.borderColor = 'transparent';
+        }
+
+        modal.style.display = 'flex';
+
+        function cleanup() {
+          btnCancel.removeEventListener('click', onCancel);
+          btnConfirm.removeEventListener('click', onConfirm);
+          modal.style.display = 'none';
+        }
+
+        function onCancel() {
+          cleanup();
+          resolve(false);
+        }
+        function onConfirm() {
+          cleanup();
+          resolve(true);
+        }
+
+        btnCancel.addEventListener('click', onCancel);
+        btnConfirm.addEventListener('click', onConfirm);
+      });
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('appToastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const isError = type === 'error';
+      const isWarning = type === 'warning';
+      const isInfo = type === 'info';
+      const bg = isError ? '#991b1b' : isWarning ? '#9a3412' : isInfo ? '#1e40af' : '#065f46';
+      const border = isError ? '#ef4444' : isWarning ? '#f97316' : isInfo ? '#3b82f6' : '#10b981';
+      const icon = isError ? '❌' : isWarning ? '⚠️' : isInfo ? 'ℹ️' : '✅';
+      
+      toast.style.cssText = `
+        background: ${bg};
+        border: 1px solid ${border};
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 13.5px;
+        font-weight: 500;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: auto;
+        transform: translateY(-10px);
+        opacity: 0;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      `;
+      toast.innerHTML = `<span style="font-size: 16px;">${icon}</span> <span>${message}</span>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+      });
+      setTimeout(() => {
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 250);
+      }, 3200);
+    }
+
+    // Override native window.alert to automatically use custom modal popup
+    window.alert = function(msg) {
+      showAppAlert(msg);
+    };
 
     let allLicenses = [];
 
@@ -590,7 +965,7 @@
 
       try {
         if (email.toLowerCase() !== 'k.phenphet@gmail.com') {
-          alert('ขออภัย บัญชีนี้ไม่ได้รับสิทธิ์เข้าใช้งานระบบผู้ดูแล SiamBraille (อนุญาตเฉพาะ k.phenphet@gmail.com)');
+          showAppAlert('ขออภัย บัญชีนี้ไม่ได้รับสิทธิ์เข้าใช้งานระบบผู้ดูแล SiamBraille (อนุญาตเฉพาะ k.phenphet@gmail.com)', 'ไม่อนุญาต', '🚫');
           return;
         }
 
@@ -610,10 +985,10 @@
           } catch (fbErr) {
             console.warn('Firebase Auth direct error:', fbErr);
             if (fbErr.code === 'auth/wrong-password' || fbErr.code === 'auth/invalid-credential') {
-              alert('รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบรหัสผ่านที่คุณตั้งไว้ใน Firebase Authentication');
+              showAppAlert('รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบรหัสผ่านที่คุณตั้งไว้ใน Firebase Authentication', 'ข้อผิดพลาดการเข้าสู่ระบบ', '❌');
               return;
             } else if (fbErr.code === 'auth/user-not-found') {
-              alert('ไม่พบชื่อผู้ใช้งานนี้ในระบบ Firebase');
+              showAppAlert('ไม่พบชื่อผู้ใช้งานนี้ในระบบ Firebase', 'ไม่พบบัญชี', '❓');
               return;
             }
           }
@@ -633,14 +1008,15 @@
             sessionStorage.setItem('sb_admin_uid', data.uid);
             authSuccess = true;
           } else {
-            alert('เข้าสู่ระบบไม่สำเร็จ: ' + (data.detail || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'));
+            showAppAlert('เข้าสู่ระบบไม่สำเร็จ: ' + (data.detail || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'), 'เข้าสู่ระบบล้มเหลว', '❌');
             return;
           }
         }
 
         checkAuth();
+        showToast('เข้าสู่ระบบผู้ดูแลสำเร็จ', 'success');
       } catch (err) {
-        alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + err.message);
+        showAppAlert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + err.message, 'ข้อผิดพลาด', '❌');
       } finally {
         btn.disabled = false;
         btn.textContent = '🔐 เข้าสู่ระบบ (Sign In)';
@@ -648,7 +1024,8 @@
     }
 
     async function handleLogout() {
-      if (confirm('คุณต้องการออกจากระบบผู้ดูแลใช่หรือไม่?')) {
+      const ok = await showAppConfirm('คุณต้องการออกจากระบบผู้ดูแลใช่หรือไม่?', 'ออกจากระบบ', '🚪', 'ออกจากระบบ', true);
+      if (ok) {
         if (fbAuth) {
           try { await fbAuth.signOut(); } catch(e) {}
         }
@@ -656,28 +1033,105 @@
         sessionStorage.removeItem('sb_admin_email');
         sessionStorage.removeItem('sb_admin_uid');
         showLogin();
+        showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
       }
     }
 
-    async function loadStats() {
+    function isLocalhost() {
+      return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    }
+
+    async function fetchJsonSafe(url, options = {}) {
       try {
-        const res = await fetch('/api/stats');
-        if (res.ok) {
-          const data = await res.json();
+        const res = await fetch(url, options);
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && ct.includes('application/json')) {
+          return await res.json();
+        }
+      } catch (e) {
+        // Safe ignore
+      }
+      return null;
+    }
+
+    function generateRandomKey() {
+      const hex = (len) => {
+        const arr = new Uint8Array(len);
+        crypto.getRandomValues(arr);
+        return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+      };
+      return `SB10-${hex(2)}-${hex(2)}-${hex(2)}`;
+    }
+
+    async function generateSignedToken(key, owner, org, lic_type, max_devices, expires_at, bound_devices) {
+      const payload = {
+        devices: bound_devices || [],
+        expires_at: expires_at,
+        issued_at: Math.floor(Date.now() / 1000),
+        key: key.toUpperCase(),
+        max_devices: Math.max(1, max_devices),
+        org: (org || "").trim(),
+        owner: owner.trim(),
+        type: lic_type
+      };
+
+      const sortedKeys = Object.keys(payload).sort();
+      const sortedObj = {};
+      sortedKeys.forEach(k => { sortedObj[k] = payload[k]; });
+      const jsonStr = JSON.stringify(sortedObj);
+
+      let sig = "";
+      try {
+        const encoder = new TextEncoder();
+        const keyData = encoder.encode("SiamBraille-Pro-2026-Secret-Master-HMAC-Token-Key!");
+        const cryptoKey = await crypto.subtle.importKey(
+          "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+        );
+        const sigBuffer = await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(jsonStr));
+        sig = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+      } catch (err) {
+        console.warn('WebCrypto HMAC sign fallback:', err);
+        sig = "CLOUD_SIGNED_" + Date.now();
+      }
+
+      const fullPkg = {
+        payload: payload,
+        sig: sig,
+        ver: "1.0"
+      };
+      const token = btoa(unescape(encodeURIComponent(JSON.stringify(fullPkg))));
+      return { token, sig, payload };
+    }
+
+    function downloadKeyFile(key, token) {
+      const blob = new Blob([token], { type: 'application/octet-stream' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `license.key`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function loadStats() {
+      if (isLocalhost()) {
+        const data = await fetchJsonSafe('/api/stats');
+        if (data && data.total_keys !== undefined) {
           document.getElementById('stat-keys').textContent = data.total_keys;
           document.getElementById('stat-devices').textContent = data.total_devices;
           document.getElementById('stat-seats').textContent = data.total_seats;
           return;
         }
-      } catch (err) {}
+      }
       renderStatsFromLicenses(allLicenses);
     }
 
     function renderStatsFromLicenses(list) {
-      const totalKeys = list.length;
+      const totalKeys = (list || []).length;
       let totalDevices = 0;
       let totalSeats = 0;
-      list.forEach(l => {
+      (list || []).forEach(l => {
         totalDevices += (l.devices || []).length;
         totalSeats += (l.max_devices || 1);
       });
@@ -687,26 +1141,26 @@
     }
 
     async function loadLicenses() {
-      // 1. ลองดึงจาก Local Server API ก่อน
-      try {
-        const res = await fetch('/api/licenses');
-        if (res.ok) {
-          allLicenses = await res.json();
+      // 1. ลองดึงจาก Local Server API (เมื่อรันบนเครื่อง Localhost)
+      if (isLocalhost()) {
+        const localList = await fetchJsonSafe('/api/licenses');
+        if (localList && Array.isArray(localList)) {
+          allLicenses = localList;
           renderTable(allLicenses);
           loadStats();
           return;
         }
-      } catch (err) {
-        console.log('Local API unavailable, fallback to Firestore directly:', err);
       }
 
-      // 2. ถ้าอยู่บน Firebase Hosting ให้ดึงตรงจาก Cloud Firestore
+      // 2. ถ้าอยู่บน Firebase Cloud หรือ Local API ไม่ตอบสนอง ดึงตรงจาก Cloud Firestore
       if (fbDb) {
         try {
           const snapshot = await fbDb.collection('licenses').get();
           allLicenses = [];
           snapshot.forEach(doc => {
-            allLicenses.push(doc.data());
+            const data = doc.data();
+            if (!data.key) data.key = doc.id;
+            allLicenses.push(data);
           });
           allLicenses.sort((a, b) => (b.issued_at || 0) - (a.issued_at || 0));
           renderTable(allLicenses);
@@ -812,32 +1266,81 @@
       btn.disabled = true;
       btn.textContent = 'กำลังออกคีย์...';
 
-      const payload = {
-        owner: document.getElementById('new_owner').value.trim(),
-        org: document.getElementById('new_org').value.trim(),
-        lic_type: document.getElementById('new_type').value,
-        max_devices: parseInt(document.getElementById('new_devices').value) || 1,
-        bound_hwid: document.getElementById('new_hwid').value.trim()
-      };
+      const owner = document.getElementById('new_owner').value.trim();
+      const org = document.getElementById('new_org').value.trim();
+      const lic_type = document.getElementById('new_type').value;
+      const max_devices = parseInt(document.getElementById('new_devices').value) || 1;
+      const bound_hwid = document.getElementById('new_hwid').value.trim();
+
+      const now = Math.floor(Date.now() / 1000);
+      let expires_at = null;
+      if (lic_type === 'yearly') {
+        expires_at = now + (365 * 86400);
+      } else if (lic_type === 'monthly') {
+        expires_at = now + (30 * 86400);
+      } else if (lic_type === 'trial') {
+        expires_at = now + (14 * 86400);
+      }
+
+      const boundDevices = bound_hwid ? [bound_hwid] : [];
+      let createdRecord = null;
 
       try {
-        const res = await fetch('/api/licenses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const resData = await res.json();
-        if (res.ok) {
-          alert('ออกคีย์สำเร็จ!\nรหัสคีย์: ' + resData.data.key);
-          closeCreateModal();
-          loadLicenses();
-          // ดาวน์โหลดไฟล์อัตโนมัติ
-          window.location.href = `/api/licenses/${resData.data.key}/download`;
-        } else {
-          alert('เกิดข้อผิดพลาด: ' + (resData.detail || 'ไม่สามารถออกคีย์ได้'));
+        // 1. ลองผ่าน Local Server API ถ้าอยู่บน Localhost
+        if (isLocalhost()) {
+          const resData = await fetchJsonSafe('/api/licenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              owner: owner,
+              org: org,
+              lic_type: lic_type,
+              max_devices: max_devices,
+              bound_hwid: bound_hwid
+            })
+          });
+          if (resData && resData.data) {
+            createdRecord = resData.data;
+          }
+        }
+
+        // 2. ถ้าอยู่บน Cloud Firestore หรือ Local API ไม่ได้รัน สร้างและเซฟตรงบน Cloud Firestore
+        if (!createdRecord) {
+          const key = generateRandomKey();
+          const signed = await generateSignedToken(key, owner, org, lic_type, max_devices, expires_at, boundDevices);
+          
+          createdRecord = {
+            key: key,
+            owner: owner,
+            org: org,
+            type: lic_type,
+            max_devices: max_devices,
+            issued_at: now,
+            expires_at: expires_at,
+            devices: boundDevices,
+            status: 'active',
+            token: signed.token,
+            sig: signed.sig,
+            last_sync: now
+          };
+
+          if (fbDb) {
+            await fbDb.collection('licenses').doc(key).set(createdRecord);
+          }
+        }
+
+        showAppAlert(`รหัสคีย์: ${createdRecord.key}\nเจ้าของ: ${createdRecord.owner}\n\nระบบกำลังดาวน์โหลดไฟล์ license.key ให้ทันที`, 'ออกคีย์ลิขสิทธิ์สำเร็จ!', '🎉');
+        closeCreateModal();
+        loadLicenses();
+
+        // ดาวน์โหลดไฟล์อัตโนมัติ
+        if (createdRecord.token) {
+          downloadKeyFile(createdRecord.key, createdRecord.token);
+        } else if (isLocalhost()) {
+          window.location.href = `/api/licenses/${createdRecord.key}/download`;
         }
       } catch (err) {
-        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err);
+        showAppAlert('เกิดข้อผิดพลาดในการออกคีย์: ' + err.message, 'ข้อผิดพลาด', '❌');
       } finally {
         btn.disabled = false;
         btn.textContent = '💾 ออกคีย์ & สร้างไฟล์ license.key';
@@ -845,151 +1348,506 @@
     }
 
     function downloadKey(key) {
-      window.location.href = `/api/licenses/${key}/download`;
+      const lic = allLicenses.find(l => l.key === key);
+      if (lic && lic.token) {
+        downloadKeyFile(lic.key, lic.token);
+        return;
+      }
+      if (isLocalhost()) {
+        window.location.href = `/api/licenses/${key}/download`;
+        return;
+      }
+      showAppAlert('ไม่พบข้อมูล token สำหรับคีย์นี้', 'ข้อผิดพลาด', '⚠️');
     }
 
     async function resetDevices(key) {
-      if (!confirm(`คุณต้องการรีเซ็ตอุปกรณ์สำหรับคีย์ ${key} ใช่หรือไม่?\n\nการรีเซ็ตจะปลดล็อก HWID เดิมออกทั้งหมด เพื่อให้ลูกค้านำคีย์นี้ไปเปิดใช้งานบนคอมพิวเตอร์เครื่องใหม่ได้ทันที`)) {
-        return;
-      }
+      const ok = await showAppConfirm(
+        `รหัสคีย์: ${key}\n\nการรีเซ็ตจะปลดล็อก HWID เดิมออกทั้งหมด เพื่อให้ลูกค้านำคีย์นี้ไปเปิดใช้งานบนคอมพิวเตอร์เครื่องใหม่ได้ทันที`,
+        'ยืนยันการรีเซ็ตอุปกรณ์ (Reset HWID)?',
+        '🔄',
+        'รีเซ็ตอุปกรณ์',
+        false
+      );
+      if (!ok) return;
+
       try {
         let success = false;
-        try {
-          const res = await fetch(`/api/licenses/${key}/reset_devices`, { method: 'POST' });
-          if (res.ok) {
-            const resData = await res.json();
-            alert(resData.message || 'รีเซ็ตอุปกรณ์สำเร็จ! ลูกค้าสามารถนำคีย์ไปเปิดใช้งานในเครื่องใหม่ได้แล้ว');
+        if (isLocalhost()) {
+          const resData = await fetchJsonSafe(`/api/licenses/${key}/reset_devices`, { method: 'POST' });
+          if (resData && resData.status === 'success') {
             success = true;
           }
-        } catch(e) {}
+        }
 
-        if (!success && fbDb) {
+        if (fbDb) {
           await fbDb.collection('licenses').doc(key).update({
             devices: [],
             updated_at: Math.floor(Date.now() / 1000)
           });
-          alert('รีเซ็ตอุปกรณ์บน Cloud Firestore เรียบร้อยแล้ว! ปลดล็อก HWID เดิมออกทั้งหมดแล้ว');
           success = true;
         }
 
         if (success) {
+          showToast(`รีเซ็ตอุปกรณ์ของคีย์ ${key} สำเร็จ! ปลดล็อก HWID แล้ว`, 'success');
           loadLicenses();
         } else {
-          alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์หรือฐานข้อมูลเพื่อรีเซ็ตได้');
+          showAppAlert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์หรือฐานข้อมูลเพื่อรีเซ็ตได้', 'ข้อผิดพลาด', '❌');
         }
       } catch (err) {
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+        showAppAlert('เกิดข้อผิดพลาด: ' + err.message, 'ข้อผิดพลาด', '❌');
       }
     }
 
     async function reactivateKey(key) {
-      if (!confirm(`คุณต้องการปลดการระงับ และเปิดใช้งานคีย์ ${key} อีกครั้งใช่หรือไม่?`)) {
-        return;
-      }
+      const ok = await showAppConfirm(
+        `คุณต้องการปลดการระงับ และเปิดใช้งานคีย์ ${key} อีกครั้งใช่หรือไม่?`,
+        'ปลดการระงับคีย์ลิขสิทธิ์',
+        '🟢',
+        'เปิดใช้งานคีย์',
+        false
+      );
+      if (!ok) return;
+
       try {
         let success = false;
-        try {
-          const res = await fetch(`/api/licenses/${key}/reactivate`, { method: 'POST' });
-          if (res.ok) {
-            const resData = await res.json();
-            alert(resData.message || `เปิดใช้งานคีย์ ${key} เรียบร้อยแล้ว`);
+        if (isLocalhost()) {
+          const resData = await fetchJsonSafe(`/api/licenses/${key}/reactivate`, { method: 'POST' });
+          if (resData && resData.status === 'success') {
             success = true;
           }
-        } catch(e) {}
+        }
 
-        if (!success && fbDb) {
+        if (fbDb) {
           await fbDb.collection('licenses').doc(key).update({
             status: 'active',
             updated_at: Math.floor(Date.now() / 1000)
           });
-          alert(`ปลดการระงับและเปิดใช้งานคีย์ ${key} บน Cloud Firestore เรียบร้อยแล้ว`);
           success = true;
         }
 
         if (success) {
+          showToast(`ปลดการระงับและเปิดใช้งานคีย์ ${key} เรียบร้อยแล้ว`, 'success');
           loadLicenses();
         } else {
-          alert('ไม่สามารถเปิดใช้งานคีย์ได้');
+          showAppAlert('ไม่สามารถเปิดใช้งานคีย์ได้', 'ข้อผิดพลาด', '❌');
         }
       } catch (err) {
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+        showAppAlert('เกิดข้อผิดพลาด: ' + err.message, 'ข้อผิดพลาด', '❌');
       }
     }
 
     async function revokeKey(key) {
-      if (!confirm(`คุณต้องการระงับการใช้งานคีย์ ${key} ใช่หรือไม่?\n\nเมื่อระงับแล้ว เครื่องลูกข่ายจะไม่สามารถใช้งานได้`)) {
-        return;
-      }
+      const ok = await showAppConfirm(
+        `รหัสคีย์: ${key}\n\nเมื่อระงับแล้ว เครื่องลูกข่ายจะไม่สามารถเปิดใช้งานโปรแกรมได้จนกว่าจะได้รับการปลดระงับ`,
+        'ยืนยันการระงับการใช้งานคีย์?',
+        '⛔',
+        'ระงับการใช้งาน',
+        true
+      );
+      if (!ok) return;
+
       try {
         let success = false;
-        try {
-          const res = await fetch(`/api/licenses/${key}/revoke`, {
+        if (isLocalhost()) {
+          const resData = await fetchJsonSafe(`/api/licenses/${key}/revoke`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reason: 'ระงับโดยผู้ดูแลระบบ' })
           });
-          if (res.ok) {
-            alert(`ระงับคีย์ ${key} เรียบร้อยแล้ว`);
+          if (resData && resData.status === 'success') {
             success = true;
           }
-        } catch(e) {}
+        }
 
-        if (!success && fbDb) {
+        if (fbDb) {
           await fbDb.collection('licenses').doc(key).update({
             status: 'revoked',
             revoke_reason: 'ระงับโดยผู้ดูแลระบบ',
             updated_at: Math.floor(Date.now() / 1000)
           });
-          alert(`ระงับคีย์ ${key} บน Cloud Firestore เรียบร้อยแล้ว`);
           success = true;
         }
 
         if (success) {
+          showToast(`ระงับคีย์ ${key} เรียบร้อยแล้ว`, 'warning');
           loadLicenses();
         } else {
-          alert('ไม่สามารถระงับคีย์ได้');
+          showAppAlert('ไม่สามารถระงับคีย์ได้', 'ข้อผิดพลาด', '❌');
         }
       } catch (err) {
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+        showAppAlert('เกิดข้อผิดพลาด: ' + err.message, 'ข้อผิดพลาด', '❌');
       }
     }
 
     async function deleteKey(key, owner) {
-      const confirmMsg = `⚠️ ยืนยันการลบคีย์ลิขสิทธิ์อย่างถาวร?\n\nรหัสคีย์: ${key}\nเจ้าของ: ${owner || '-'}\n\nคำเตือน: การลบนี้จะลบข้อมูลคีย์และอุปกรณ์ที่ผูกไว้ออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้`;
-      if (!confirm(confirmMsg)) {
-        return;
-      }
+      const ok = await showAppConfirm(
+        `รหัสคีย์: ${key}\nเจ้าของ: ${owner || '-'}\n\nคำเตือน: การลบนี้จะลบข้อมูลคีย์และอุปกรณ์ที่ผูกไว้ออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้`,
+        'ยืนยันการลบคีย์ลิขสิทธิ์อย่างถาวร?',
+        '🗑️',
+        'ลบคีย์ถาวร',
+        true
+      );
+      if (!ok) return;
+
       try {
         let success = false;
-        try {
-          const res = await fetch(`/api/licenses/${key}/delete`, { method: 'POST' });
-          if (res.ok) {
-            const resData = await res.json();
-            alert(resData.message || `ลบคีย์ ${key} ออกจากระบบเรียบร้อยแล้ว`);
+        if (isLocalhost()) {
+          const resData = await fetchJsonSafe(`/api/licenses/${key}/delete`, { method: 'POST' });
+          if (resData && resData.status === 'success') {
             success = true;
           }
-        } catch(e) {}
+        }
 
-        if (!success && fbDb) {
+        if (fbDb) {
           await fbDb.collection('licenses').doc(key).delete();
-          alert(`ลบคีย์ ${key} บน Cloud Firestore เรียบร้อยแล้ว`);
           success = true;
         }
 
         if (success) {
+          showToast(`ลบคีย์ ${key} ออกจากระบบเรียบร้อยแล้ว`, 'success');
           loadLicenses();
         } else {
-          alert('ไม่สามารถลบคีย์ได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์');
+          showAppAlert('ไม่สามารถลบคีย์ได้ กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล', 'ข้อผิดพลาด', '❌');
         }
       } catch (err) {
-        alert('เกิดข้อผิดพลาดในการลบ: ' + err.message);
+        showAppAlert('เกิดข้อผิดพลาดในการลบ: ' + err.message, 'ข้อผิดพลาด', '❌');
       }
     }
 
-
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text);
-      alert('คัดลอกรหัสคีย์ ' + text + ' แล้ว');
+      showToast('คัดลอกรหัสคีย์ ' + text + ' แล้ว', 'success');
+    }
+
+    // ==========================================
+    // Tab Management
+    // ==========================================
+    let currentAdminTab = 'licenses';
+    let allPackagesList = [];
+
+    function switchAdminTab(tab) {
+      currentAdminTab = tab;
+      const tabs = ['licenses', 'packages', 'orders'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`btnTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const content = document.getElementById(`tabContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (t === tab) {
+          btn.style.background = 'rgba(6, 182, 212, 0.2)';
+          btn.style.borderColor = 'var(--accent-cyan)';
+          btn.style.color = '#fff';
+          content.style.display = 'block';
+        } else {
+          btn.style.background = 'rgba(255, 255, 255, 0.08)';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          btn.style.color = '#e2e8f0';
+          content.style.display = 'none';
+        }
+      });
+
+      if (tab === 'packages') {
+        loadPackages();
+      } else if (tab === 'orders') {
+        loadOrders();
+      } else {
+        loadLicenses();
+      }
+    }
+
+    // ==========================================
+    // Package Management
+    // ==========================================
+    async function loadPackages() {
+      const container = document.getElementById('packagesContainer');
+      container.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center;">กำลังโหลดข้อมูลแพ็กเกจ...</div>';
+
+      // 1. ลองดึงผ่าน Local Server API ก่อน (เมื่อรันบนเครื่อง Localhost)
+      if (isLocalhost()) {
+        const resData = await fetchJsonSafe('/api/packages');
+        if (resData && resData.data) {
+          allPackagesList = resData.data;
+          renderPackages(allPackagesList);
+          return;
+        }
+      }
+
+      // 2. ดึงตรงจาก Cloud Firestore
+      if (fbDb) {
+        try {
+          const snap = await fbDb.collection('packages').get();
+          allPackagesList = [];
+          snap.forEach(doc => {
+            const d = doc.data();
+            if (!d.id) d.id = doc.id;
+            allPackagesList.push(d);
+          });
+          allPackagesList.sort((a, b) => (a.price || 0) - (b.price || 0));
+          renderPackages(allPackagesList);
+          return;
+        } catch (err) {
+          console.warn('Load packages from Firestore error:', err);
+        }
+      }
+
+      container.innerHTML = '<div style="color: var(--accent-red); padding: 20px;">ไม่สามารถเชื่อมต่อระบบแพ็กเกจได้</div>';
+    }
+
+    function renderPackages(pkgs) {
+      const container = document.getElementById('packagesContainer');
+      if (!pkgs || pkgs.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 20px;">ยังไม่มีแพ็กเกจที่ตั้งค่าไว้</div>';
+        return;
+      }
+
+      container.innerHTML = pkgs.map(p => {
+        const featList = (p.features || []).map(f => `<li style="margin-bottom: 6px;">✓ ${f}</li>`).join('');
+        const badgeHtml = p.badge ? `<span style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">${p.badge}</span>` : '';
+        
+        return `
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid ${p.popular ? 'var(--accent-cyan)' : 'var(--card-border)'}; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div>
+                  <div style="font-size: 12px; color: var(--accent-cyan); font-family: 'Consolas', monospace;">ID: ${p.id}</div>
+                  <h3 style="font-size: 18px; font-weight: 700; margin-top: 2px;">${p.name}</h3>
+                </div>
+                ${badgeHtml}
+              </div>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">${p.desc || '-'}</p>
+
+              <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                  <span style="font-size: 12px; color: var(--text-muted);">ราคาขาย:</span>
+                  <span style="font-size: 26px; font-weight: 800; font-family: 'Chakra Petch', sans-serif; color: #34d399;">${Number(p.price).toLocaleString()} ฿</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                  <span style="color: var(--text-muted);">จำกัดเครื่องต่อคีย์:</span>
+                  <span style="font-weight: 700; color: #38bdf8;">${p.max_devices} เครื่อง (${p.type})</span>
+                </div>
+              </div>
+
+              <ul style="font-size: 12px; color: #cbd5e1; list-style: none; padding: 0; margin-bottom: 20px;">
+                ${featList}
+              </ul>
+            </div>
+
+            <div style="display: flex; gap: 8px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 16px;">
+              <button class="btn-secondary" style="flex: 1; justify-content: center;" onclick="openPackageModal('${p.id}')">✏️ แก้ไขราคา & ข้อมูล</button>
+              <button class="btn-action btn-danger" onclick="deletePackage('${p.id}')" title="ลบแพ็กเกจนี้">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openPackageModal(pkgId = null) {
+      const modal = document.getElementById('packageModal');
+      const form = document.getElementById('packageForm');
+      form.reset();
+
+      if (pkgId) {
+        const p = allPackagesList.find(x => x.id === pkgId);
+        if (p) {
+          document.getElementById('packageModalTitle').textContent = `⚙️ แก้ไขแพ็กเกจ: ${p.name}`;
+          document.getElementById('pkg_is_edit').value = '1';
+          document.getElementById('pkg_id').value = p.id;
+          document.getElementById('pkg_id').readOnly = true;
+          document.getElementById('pkg_price').value = p.price;
+          document.getElementById('pkg_name').value = p.name;
+          document.getElementById('pkg_desc').value = p.desc || '';
+          document.getElementById('pkg_max_devices').value = p.max_devices || 1;
+          document.getElementById('pkg_badge').value = p.badge || '';
+          document.getElementById('pkg_period').value = p.period || 'ตลอดชีพ';
+          document.getElementById('pkg_type').value = p.type || 'lifetime';
+          document.getElementById('pkg_features').value = (p.features || []).join('\n');
+        }
+      } else {
+        document.getElementById('packageModalTitle').textContent = '➕ เพิ่มแพ็กเกจใหม่';
+        document.getElementById('pkg_is_edit').value = '0';
+        document.getElementById('pkg_id').readOnly = false;
+        document.getElementById('pkg_max_devices').value = 1;
+        document.getElementById('pkg_period').value = 'ตลอดชีพ';
+        document.getElementById('pkg_type').value = 'lifetime';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closePackageModal() {
+      document.getElementById('packageModal').style.display = 'none';
+      document.getElementById('packageForm').reset();
+    }
+
+    async function handleSavePackage(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitPackage');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+
+      const featStr = document.getElementById('pkg_features').value;
+      const featArr = featStr.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+
+      const pkgData = {
+        id: document.getElementById('pkg_id').value.trim(),
+        name: document.getElementById('pkg_name').value.trim(),
+        desc: document.getElementById('pkg_desc').value.trim(),
+        price: parseFloat(document.getElementById('pkg_price').value) || 0,
+        period: document.getElementById('pkg_period').value.trim() || 'ตลอดชีพ',
+        type: document.getElementById('pkg_type').value,
+        max_devices: parseInt(document.getElementById('pkg_max_devices').value) || 1,
+        badge: document.getElementById('pkg_badge').value.trim(),
+        popular: document.getElementById('pkg_badge').value.includes('ยอดนิยม'),
+        features: featArr,
+        updated_at: Math.floor(Date.now() / 1000)
+      };
+
+      try {
+        let saved = false;
+
+        // 1. ถ้าอยู่บน Localhost ให้ส่งไป Local API ด้วย
+        if (isLocalhost()) {
+          const res = await fetchJsonSafe('/api/packages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pkgData)
+          });
+          if (res && res.status === 'success') {
+            saved = true;
+          }
+        }
+
+        // 2. บันทึกลง Cloud Firestore
+        if (fbDb) {
+          await fbDb.collection('packages').doc(pkgData.id).set(pkgData, { merge: true });
+          saved = true;
+        }
+
+        if (saved) {
+          showToast('💾 บันทึกข้อมูลแพ็กเกจเรียบร้อยแล้ว', 'success');
+          closePackageModal();
+          loadPackages();
+        } else {
+          showAppAlert('ไม่สามารถบันทึกแพ็กเกจได้ กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล', 'ข้อผิดพลาด', '❌');
+        }
+      } catch (err) {
+        showAppAlert('เกิดข้อผิดพลาดในการบันทึก: ' + err.message, 'ข้อผิดพลาด', '❌');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 บันทึกแพ็กเกจ';
+      }
+    }
+
+    async function deletePackage(pkgId) {
+      const ok = await showAppConfirm(
+        `คุณแน่ใจหรือไม่ว่าต้องการลบแพ็กเกจ ${pkgId}?\nแพ็กเกจนี้จะไม่ปรากฏบนหน้าเว็บอีกต่อไป`,
+        'ยืนยันการลบแพ็กเกจ',
+        '🗑️',
+        'ลบแพ็กเกจ',
+        true
+      );
+      if (!ok) return;
+
+      try {
+        let deleted = false;
+        if (isLocalhost()) {
+          const res = await fetchJsonSafe(`/api/packages/${pkgId}`, { method: 'DELETE' });
+          if (res && res.status === 'success') {
+            deleted = true;
+          }
+        }
+
+        if (fbDb) {
+          await fbDb.collection('packages').doc(pkgId).delete();
+          deleted = true;
+        }
+
+        if (deleted) {
+          showToast(`ลบแพ็กเกจ ${pkgId} เรียบร้อยแล้ว`, 'info');
+          loadPackages();
+        } else {
+          showAppAlert('ไม่สามารถลบแพ็กเกจได้ กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล', 'ข้อผิดพลาด', '❌');
+        }
+      } catch (err) {
+        showAppAlert('เกิดข้อผิดพลาด: ' + err.message, 'ข้อผิดพลาด', '❌');
+      }
+    }
+
+    // ==========================================
+    // Orders & Slips Management
+    // ==========================================
+    async function loadOrders() {
+      const tbody = document.getElementById('ordersTableBody');
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">กำลังโหลดประวัติคำสั่งซื้อ...</td></tr>';
+
+      // 1. ลองดึงผ่าน Local Server API ก่อน (เมื่อรันบนเครื่อง Localhost)
+      if (isLocalhost()) {
+        const resData = await fetchJsonSafe('/api/orders');
+        if (resData && resData.data) {
+          renderOrders(resData.data);
+          return;
+        }
+      }
+
+      // 2. ดึงตรงจาก Cloud Firestore
+      if (fbDb) {
+        try {
+          const snap = await fbDb.collection('orders').get();
+          const ordersList = [];
+          snap.forEach(doc => {
+            const d = doc.data();
+            if (!d.id) d.id = doc.id;
+            ordersList.push(d);
+          });
+          renderOrders(ordersList);
+          return;
+        } catch (err) {
+          console.warn('Load orders from Firestore error:', err);
+        }
+      }
+
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 24px;">ไม่สามารถโหลดรายการคำสั่งซื้อได้</td></tr>';
+    }
+
+    function renderOrders(orders) {
+      const tbody = document.getElementById('ordersTableBody');
+      if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">ยังไม่มีรายการสั่งซื้อ</td></tr>';
+        return;
+      }
+
+      // เรียงจากใหม่ไปเก่า
+      orders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      tbody.innerHTML = orders.map(o => {
+        let dateStr = '-';
+        if (o.timestamp) {
+          dateStr = new Date(o.timestamp * 1000).toLocaleString('th-TH');
+        }
+        const bankName = o.slip_bank || o.bank || '-';
+        const transRef = o.slip_trans_ref || o.trans_ref || '-';
+        const key = o.key || '-';
+
+        return `
+          <tr>
+            <td style="font-size: 12px; color: var(--text-muted);">${dateStr}</td>
+            <td>
+              <strong>${o.customer_name || '-'}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${o.customer_email || '-'} | ${o.customer_phone || '-'}</div>
+            </td>
+            <td>${o.package_name || o.package_id || '-'}</td>
+            <td><strong style="color: #34d399;">${Number(o.amount || 0).toLocaleString()} ฿</strong></td>
+            <td>
+              <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">${bankName}</span>
+              <div style="font-family: 'Consolas', monospace; font-size: 11px; color: var(--text-muted); margin-top: 2px;">Ref: ${transRef}</div>
+            </td>
+            <td>
+              <span class="key-badge">
+                ${key}
+                <button onclick="copyToClipboard('${key}')" style="background:none; border:none; cursor:pointer; color:#38bdf8;" title="คัดลอกคีย์">📋</button>
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     // Auto load on init

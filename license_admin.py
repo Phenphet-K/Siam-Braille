@@ -137,7 +137,11 @@ def list_all_licenses() -> List[Dict[str, Any]]:
     if fs:
         try:
             docs = fs.collection("licenses").stream()
-            res = [d.to_dict() for d in docs]
+            res: List[Dict[str, Any]] = []
+            for d in docs:
+                data = d.to_dict()
+                if data is not None:
+                    res.append(data)
             if res:
                 return res
         except Exception:

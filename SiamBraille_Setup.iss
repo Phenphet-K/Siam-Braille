@@ -41,6 +41,11 @@ Source: "SIMBRL.TTF"; DestDir: "{autofonts}"; FontInstall: "SimBraille"; Flags: 
 ; 3. ไฟล์ลิขสิทธิ์อัตโนมัติ (ถ้ามี license.key อยู่ตอนสั่งคอมไพล์หรือแจกลูกค้า จะเปิดใช้งานได้ทันที)
 Source: "license.key"; DestDir: "{app}"; Flags: skipifsourcedoesntexist ignoreversion
 
+[Registry]
+; บันทึกหลักฐานสิทธิ์ทดลองใช้ระดับเครื่อง (Machine-level) ป้องกันการถอนการติดตั้งแล้วลงใหม่เพื่อรีเซ็ตวันทดลอง
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\.sb_state"; ValueType: string; ValueName: "SecInstallTag"; ValueData: "{#MyAppVersion}"; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\.sb_state"; ValueType: string; ValueName: "SecInstallTag"; ValueData: "{#MyAppVersion}"; Flags: createvalueifdoesntexist
+
 [Icons]
 Name: "{group}\{#MyAppName} 1.0"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\SiamBraille.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
