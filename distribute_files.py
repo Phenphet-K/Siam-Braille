@@ -11,8 +11,8 @@ DIST_DIRS = [
 ]
 
 FILES_TO_COPY = [
-    # DLLs 64-bit สำหรับ LibLouis, NVDA และประมวลผล รวมถึงไอคอนหลัก
-    "liblouis64.dll", "nvdaControllerClient64.dll", "Nbreak.dll", "SiamBraille.ico"
+    # DLLs 64-bit สำหรับ LibLouis, NVDA, MathCAT และประมวลผล รวมถึงไอคอนหลัก
+    "liblouis64.dll", "nvdaControllerClient64.dll", "Nbreak.dll", "libMathCat64.dll", "SiamBraille.ico"
 ]
 
 DIRS_TO_COPY = ["data", "Tables", "assets", "logo"]

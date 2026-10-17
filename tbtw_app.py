@@ -1229,6 +1229,285 @@ class BrailleDotConverterDialog(QDialog):
         return self.converted_text
 
 
+class MathToBrailleDialog(QDialog):
+    """
+    หน้าต่างแปลงสูตรคณิตศาสตร์และวิทยาศาสตร์เป็นอักษรเบรลล์ (Math to Braille)
+    ขับเคลื่อนด้วย MathCAT Engine (Nemeth Code / UEB Math)
+    พร้อมการแสดงผลอักษรเบรลล์, เลขตำแหน่งจุด และคำอ่านออกเสียงสูตร (Speech)
+    """
+    def __init__(self, parent=None, initial_text=""):
+        super().__init__(parent)
+        self.setWindowTitle("เครื่องมือแปลงสูตรคณิตศาสตร์เป็นอักษรเบรลล์ (Math to Braille - Nemeth / UEB)")
+        self.setAccessibleName("หน้าต่างเครื่องมือแปลงสูตรคณิตศาสตร์เป็นอักษรเบรลล์")
+        self.setWindowIcon(get_main_app_icon())
+        self.resize(720, 580)
+        self.parent_window = parent
+
+        self.converted_braille = ""
+        self.converted_simbraille = ""
+        self.converted_dots = ""
+        self.converted_spoken = ""
+        self.chosen_insert = ""
+
+        # Load MathCAT Service
+        from math_braille_service import MathCATService
+        self.math_service = MathCATService.get_instance()
+
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #f0f0f0;
+                font-family: 'Tahoma', 'MS Sans Serif';
+                font-size: 11px;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #808080;
+                border-radius: 4px;
+                margin-top: 8px;
+                padding-top: 10px;
+                background-color: #fafafa;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 4px;
+            }
+            QPushButton {
+                background-color: #f0f0f0;
+                border: 2px solid;
+                border-color: #ffffff #808080 #808080 #ffffff;
+                padding: 4px 10px;
+                min-width: 60px;
+                font-size: 11px;
+            }
+            QPushButton:hover {
+                background-color: #e8e8e8;
+            }
+            QPushButton:pressed {
+                border-color: #808080 #ffffff #ffffff #808080;
+                background-color: #d8d8d8;
+            }
+            QLineEdit, QPlainTextEdit {
+                background-color: #ffffff;
+                border: 1px solid #7f9db9;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(8)
+
+        # 1. Top Section: Math Formula Input
+        grp_in = QGroupBox("สูตรคณิตศาสตร์ / สมการ (LaTeX, ASCIIMath หรือ MathML)")
+        lay_in = QVBoxLayout(grp_in)
+
+        # Quick Insert Toolbar
+        tb_layout = QHBoxLayout()
+        tb_layout.setSpacing(4)
+        quick_symbols = [
+            ("½ เศษส่วน", r"\frac{a}{b}"),
+            ("√ รูท", r"\sqrt{x}"),
+            ("x² ยกกำลัง", r"^2"),
+            ("xᵢ ตัวห้อย", r"_1"),
+            ("±", r"\pm"),
+            ("×", r"\times"),
+            ("÷", r"\div"),
+            ("≠", r"\ne"),
+            ("≤", r"\le"),
+            ("≥", r"\ge"),
+            ("π", r"\pi"),
+            ("α", r"\alpha"),
+            ("β", r"\beta"),
+            ("θ", r"\theta"),
+            ("∞", r"\infty"),
+        ]
+        for label, val in quick_symbols:
+            btn = QPushButton(label)
+            btn.setMaximumHeight(24)
+            btn.setStyleSheet("padding: 2px 6px; font-size: 10px; min-width: 28px;")
+            btn.clicked.connect(lambda checked=False, v=val: self.insert_symbol(v))
+            tb_layout.addWidget(btn)
+        tb_layout.addStretch()
+        lay_in.addLayout(tb_layout)
+
+        self.txt_math_input = QPlainTextEdit()
+        self.txt_math_input.setFont(QFont("Consolas", 12))
+        self.txt_math_input.setMaximumHeight(80)
+        self.txt_math_input.setPlaceholderText(r"พิมพ์สูตรคณิตศาสตร์ เช่น \frac{1}{2}, \sqrt{16}=4, x^2+y^2=r^2 หรือ 1/2...")
+        self.txt_math_input.setAccessibleName("กล่องพิมพ์สูตรคณิตศาสตร์หรือสมการ")
+        lay_in.addWidget(self.txt_math_input)
+
+        # Code selection row
+        sel_layout = QHBoxLayout()
+        sel_lbl = QLabel("มาตรฐานรหัสเบรลล์คณิตศาสตร์:")
+        sel_lbl.setFont(QFont("Tahoma", 10, QFont.Weight.Bold))
+        sel_layout.addWidget(sel_lbl)
+
+        self.rb_nemeth = QRadioButton("Nemeth Code (มาตรฐานที่ใช้ในไทยและสากล)")
+        self.rb_nemeth.setChecked(True)
+        self.rb_nemeth.toggled.connect(self.on_input_changed)
+        sel_layout.addWidget(self.rb_nemeth)
+
+        self.rb_ueb = QRadioButton("UEB Math (Unified English Braille)")
+        self.rb_ueb.toggled.connect(self.on_input_changed)
+        sel_layout.addWidget(self.rb_ueb)
+        sel_layout.addStretch()
+        lay_in.addLayout(sel_layout)
+
+        layout.addWidget(grp_in)
+
+        # 2. Output Group: Braille & Spoken Math
+        grp_out = QGroupBox("ผลลัพธ์การแปลงอักษรเบรลล์คณิตศาสตร์")
+        lay_out = QVBoxLayout(grp_out)
+
+        # Braille Output Row
+        lbl_br = QLabel("อักษรเบรลล์ (SimBraille Font & Unicode):")
+        lay_out.addWidget(lbl_br)
+
+        self.txt_braille_out = QPlainTextEdit()
+        self.txt_braille_out.setReadOnly(True)
+        self.txt_braille_out.setMaximumHeight(80)
+        use_simbrl = getattr(self.parent_window, 'simbrl_font_loaded', False)
+        if use_simbrl:
+            self.txt_braille_out.setFont(QFont("SimBraille", 18))
+        else:
+            self.txt_braille_out.setFont(QFont("Consolas", 14))
+        self.txt_braille_out.setStyleSheet("background-color: #ffffff; color: #000080; font-weight: bold;")
+        self.txt_braille_out.setAccessibleName("กล่องแสดงผลลัพธ์อักษรเบรลล์คณิตศาสตร์")
+        lay_out.addWidget(self.txt_braille_out)
+
+        # Spoken reading row
+        spk_layout = QHBoxLayout()
+        lbl_spk = QLabel("คำอ่านออกเสียง (Speech):")
+        lbl_spk.setFont(QFont("Tahoma", 10))
+        spk_layout.addWidget(lbl_spk)
+
+        self.txt_spoken_out = QLineEdit()
+        self.txt_spoken_out.setReadOnly(True)
+        self.txt_spoken_out.setFont(QFont("Tahoma", 10))
+        self.txt_spoken_out.setStyleSheet("background-color: #ffffff; color: #005500; font-weight: bold;")
+        self.txt_spoken_out.setAccessibleName("คำอ่านออกเสียงสูตรคณิตศาสตร์")
+        spk_layout.addWidget(self.txt_spoken_out)
+
+        self.btn_speak = QPushButton("🔊 ฟังเสียงอ่าน")
+        self.btn_speak.setToolTip("อ่านออกเสียงสูตรคณิตศาสตร์ด้วย NVDA")
+        self.btn_speak.clicked.connect(self.speak_formula)
+        spk_layout.addWidget(self.btn_speak)
+        lay_out.addLayout(spk_layout)
+
+        # Dot numbers row
+        dot_layout = QHBoxLayout()
+        lbl_dot = QLabel("เลขตำแหน่งจุด (Dots 1-6):")
+        lbl_dot.setFont(QFont("Tahoma", 10))
+        dot_layout.addWidget(lbl_dot)
+
+        self.txt_dots_out = QLineEdit()
+        self.txt_dots_out.setReadOnly(True)
+        self.txt_dots_out.setFont(QFont("Consolas", 11))
+        self.txt_dots_out.setStyleSheet("background-color: #ffffff; color: #800000; font-weight: bold;")
+        self.txt_dots_out.setAccessibleName("เลขตำแหน่งจุดเบรลล์ 6 จุดของสูตร")
+        dot_layout.addWidget(self.txt_dots_out)
+        lay_out.addLayout(dot_layout)
+
+        layout.addWidget(grp_out)
+
+        # 3. Action Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_copy_braille = QPushButton("📋 คัดลอกอักษรเบรลล์")
+        self.btn_copy_braille.clicked.connect(self.copy_braille)
+        btn_layout.addWidget(self.btn_copy_braille)
+
+        self.btn_copy_dots = QPushButton("📋 คัดลอกเลขจุด")
+        self.btn_copy_dots.clicked.connect(self.copy_dots)
+        btn_layout.addWidget(self.btn_copy_dots)
+
+        self.btn_insert = QPushButton("📥 แทรกอักษรเบรลล์ในเอกสาร")
+        self.btn_insert.setStyleSheet("font-weight: bold; color: #000080;")
+        self.btn_insert.clicked.connect(self.insert_into_editor)
+        btn_layout.addWidget(self.btn_insert)
+
+        btn_layout.addStretch()
+
+        self.btn_close = QPushButton("❌ ปิด")
+        self.btn_close.clicked.connect(self.reject)
+        btn_layout.addWidget(self.btn_close)
+
+        layout.addLayout(btn_layout)
+
+        self.txt_math_input.textChanged.connect(self.on_input_changed)
+        if initial_text:
+            self.txt_math_input.setPlainText(initial_text)
+
+    def insert_symbol(self, symbol: str):
+        cursor = self.txt_math_input.textCursor()
+        cursor.insertText(symbol)
+        self.txt_math_input.setTextCursor(cursor)
+        self.txt_math_input.setFocus()
+
+    def on_input_changed(self):
+        text = self.txt_math_input.toPlainText().strip()
+        if not text:
+            self.txt_braille_out.clear()
+            self.txt_spoken_out.clear()
+            self.txt_dots_out.clear()
+            self.converted_braille = ""
+            self.converted_simbraille = ""
+            self.converted_dots = ""
+            self.converted_spoken = ""
+            return
+
+        code = "Nemeth" if self.rb_nemeth.isChecked() else "UEB"
+        res = self.math_service.convert(text, code=code)
+
+        if res["success"]:
+            self.converted_braille = res["braille"]
+            self.converted_simbraille = res["simbraille_ascii"]
+            self.converted_dots = res["dot_numbers"]
+            self.converted_spoken = res["spoken"]
+
+            use_simbrl = getattr(self.parent_window, 'simbrl_font_loaded', False)
+            if use_simbrl and res["simbraille_ascii"]:
+                self.txt_braille_out.setPlainText(res["simbraille_ascii"])
+            else:
+                self.txt_braille_out.setPlainText(res["braille"])
+
+            self.txt_spoken_out.setText(res["spoken"])
+            self.txt_dots_out.setText(res["dot_numbers"])
+        else:
+            self.txt_braille_out.setPlainText(f"(ข้อผิดพลาด: {res.get('error', '')})")
+            self.txt_spoken_out.clear()
+            self.txt_dots_out.clear()
+
+    def speak_formula(self):
+        if self.converted_spoken:
+            speak_nvda(f"สูตรคณิตศาสตร์: {self.converted_spoken}", interrupt=True)
+        else:
+            speak_nvda("ยังไม่มีผลลัพธ์เสียงอ่านสูตรคณิตศาสตร์")
+
+    def copy_braille(self):
+        txt = self.converted_braille or self.txt_braille_out.toPlainText()
+        if txt:
+            QApplication.clipboard().setText(txt)
+            speak_nvda("คัดลอกอักษรเบรลล์คณิตศาสตร์เรียบร้อยแล้ว")
+
+    def copy_dots(self):
+        txt = self.converted_dots
+        if txt:
+            QApplication.clipboard().setText(txt)
+            speak_nvda("คัดลอกเลขตำแหน่งจุดเบรลล์คณิตศาสตร์เรียบร้อยแล้ว")
+
+    def insert_into_editor(self):
+        use_simbrl = getattr(self.parent_window, 'simbrl_font_loaded', False)
+        if use_simbrl and self.converted_simbraille:
+            self.chosen_insert = self.converted_simbraille
+        else:
+            self.chosen_insert = self.converted_braille or self.txt_braille_out.toPlainText()
+        self.accept()
+
+    def get_result(self) -> str:
+        return self.chosen_insert
+
+
 def crc16_ibm(data: str) -> str:
     crc = 0xFFFF
     for ch in data:
@@ -2706,6 +2985,13 @@ class TBTWMainWindow(QMainWindow):
             self.act_dot_converter.triggered.connect(self.open_dot_converter_dialog)
             self.menu_tools.addAction(self.act_dot_converter)
 
+            self.act_math_to_braille = QAction("แปลงสูตรคณิตศาสตร์เป็นเบรลล์ (Math to Braille)...\tCtrl+Shift+M", self)
+            self.act_math_to_braille.setShortcut(QKeySequence("Ctrl+Shift+M"))
+            self.act_math_to_braille.setWhatsThis("แปลงสูตรคณิตศาสตร์และสมการวิทยาศาสตร์ (LaTeX / MathML) เป็นอักษรเบรลล์ Nemeth Code หรือ UEB Math คีย์ลัด Ctrl+Shift+M")
+            self.act_math_to_braille.setStatusTip("แปลงสูตรคณิตศาสตร์เป็นอักษรเบรลล์ Nemeth/UEB (Ctrl+Shift+M)")
+            self.act_math_to_braille.triggered.connect(self.open_math_to_braille_dialog)
+            self.menu_tools.addAction(self.act_math_to_braille)
+
         # ---------------------------------------------------------
         # 5. Help Menu (Alt+H)
         # ---------------------------------------------------------
@@ -2966,6 +3252,9 @@ class TBTWMainWindow(QMainWindow):
             if hasattr(self, "act_dot_converter") and self.act_dot_converter:
                 self.act_dot_converter.setText("แปลงเป็นเลขจุดเบรลล์ (ก→1245, a→1, b→12) (&D)...\tCtrl+Shift+D" if is_th else "&Braille Dot Numbers Converter (a->1, b->12)...\tCtrl+Shift+D")
                 self.act_dot_converter.setStatusTip("แปลงเป็นเลขตำแหน่งจุดเบรลล์ 1-6 (Ctrl+Shift+D)" if is_th else "Convert to Braille dot numbers 1-6 (Ctrl+Shift+D)")
+            if hasattr(self, "act_math_to_braille") and self.act_math_to_braille:
+                self.act_math_to_braille.setText("แปลงสูตรคณิตศาสตร์เป็นเบรลล์ (Math to Braille) (&M)...\tCtrl+Shift+M" if is_th else "&Math to Braille Converter (Nemeth/UEB)...\tCtrl+Shift+M")
+                self.act_math_to_braille.setStatusTip("แปลงสูตรคณิตศาสตร์เป็นอักษรเบรลล์ Nemeth/UEB (Ctrl+Shift+M)" if is_th else "Convert Math expressions to Braille Nemeth/UEB (Ctrl+Shift+M)")
 
         # 5. Help Menu
         if hasattr(self, "menu_help") and self.menu_help:
@@ -4003,6 +4292,30 @@ class TBTWMainWindow(QMainWindow):
                 target_edit.insertPlainText(result)
                 self.set_status_message("แทรกผลลัพธ์เลขจุดเบรลล์ลงในเอกสารแล้ว")
                 speak_nvda("แทรกผลลัพธ์เลขจุดเบรลล์ลงในเอกสารแล้ว")
+
+    def open_math_to_braille_dialog(self):
+        """เปิดหน้าต่างแปลงสูตรคณิตศาสตร์เป็นอักษรเบรลล์ Math to Braille (Ctrl+Shift+M)"""
+        initial_text = ""
+        focused_widget = QApplication.focusWidget()
+        target_edit = self.txt_normal
+        if focused_widget == self.txt_braille:
+            target_edit = self.txt_braille
+            cursor = self.txt_braille.textCursor()
+            if cursor.hasSelection():
+                initial_text = cursor.selectedText()
+        else:
+            cursor = self.txt_normal.textCursor()
+            if cursor.hasSelection():
+                initial_text = cursor.selectedText()
+
+        dlg = MathToBrailleDialog(self, initial_text=initial_text)
+        speak_nvda("เปิดเครื่องมือแปลงสูตรคณิตศาสตร์เป็นอักษรเบรลล์ Math to Braille")
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            result = dlg.get_result()
+            if result:
+                target_edit.insertPlainText(result)
+                self.set_status_message("แทรกอักษรเบรลล์คณิตศาสตร์ลงในเอกสารสำเร็จ")
+                speak_nvda("แทรกอักษรเบรลล์คณิตศาสตร์ลงในเอกสารสำเร็จ")
 
     def open_remote_input_dialog(self):
         """เปิดหน้าต่างระบบพิมพ์ผ่านมือถือในวง LAN (Ctrl+Shift+W)"""
